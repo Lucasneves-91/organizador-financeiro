@@ -1,0 +1,23 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}Organizador Financeiro{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'transacoes/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="marca">🗂 Organizador<span>Financeiro</span></div>
+        <div class="abas">
+            <span class="aba ativa">1. Transações</span>
+            <span class="aba futura" title="Em breve">2. Categorias</span>
+            <span class="aba futura" title="Em breve">3. Orçamento</span>
+            <span class="aba futura" title="Em breve">4. Relatórios</span>
+        </div>
+    </nav>
+    <div class="container">
+        {% block conteudo %}{% endblock %}
+    </div>
+</body>
+</html>

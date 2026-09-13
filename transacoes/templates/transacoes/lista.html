@@ -1,0 +1,107 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Dashboard · Organizador Financeiro{% endblock %}
+
+{% block conteudo %}
+<div class="topo">
+    <div>
+        <h1>Dashboard financeiro</h1>
+        <p class="subtitulo">Visão geral das suas transações</p>
+    </div>
+    <a href="{% url 'transacoes:cadastrar' %}" class="botao">+ Nova transação</a>
+</div>
+
+<div class="cartoes-resumo">
+    <div class="stat-tile receitas">
+        <span class="rotulo">Receitas</span>
+        <div class="valor">{{ total_receitas }}</div>
+        <div class="medidor">
+            <div class="trilha">
+                <div class="preenchimento" style="width: {{ percentual_receitas }}%"></div>
+            </div>
+        </div>
+        <p class="legenda-medidor">{{ percentual_receitas }}% do total movimentado</p>
+    </div>
+
+    <div class="stat-tile despesas">
+        <span class="rotulo">Despesas</span>
+        <div class="valor">{{ total_despesas }}</div>
+        <div class="medidor">
+            <div class="trilha">
+                <div class="preenchimento" style="width: {{ percentual_despesas }}%"></div>
+            </div>
+        </div>
+        <p class="legenda-medidor">{{ percentual_despesas }}% do total movimentado</p>
+    </div>
+
+    <div class="stat-tile saldo {% if saldo_positivo %}positivo{% else %}negativo{% endif %}">
+        <span class="rotulo">Saldo</span>
+        <div class="valor">{{ saldo }}</div>
+        <div class="medidor">
+            <div class="trilha">
+                <div class="preenchimento" style="width: {{ percentual_economia }}%"></div>
+            </div>
+        </div>
+        <p class="legenda-medidor">
+            {% if saldo_positivo %}{{ percentual_economia }}% das receitas preservado{% else %}Resultado negativo no período{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="grade-painel">
+    <div class="painel">
+        <div class="painel-cabecalho">Despesas por categoria</div>
+        {% if despesas_por_categoria %}
+        <ul class="lista-categorias">
+            {% for linha in despesas_por_categoria %}
+            <li>
+                <div class="linha-categoria">
+                    <span class="nome"><span class="pingo {{ linha.cor }}"></span>{{ linha.categoria }}</span>
+                    <span>{{ linha.total_formatado }} · {{ linha.percentual }}%</span>
+                </div>
+                <div class="barra-categoria">
+                    <span class="{{ linha.cor }}" style="width: {{ linha.percentual }}%"></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="painel-vazio">Nenhuma despesa cadastrada ainda.</p>
+        {% endif %}
+    </div>
+
+    <div class="painel">
+        <table>
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transacao in transacoes %}
+                <tr>
+                    <td>{{ transacao.descricao }}</td>
+                    <td>{{ transacao.valor }}</td>
+                    <td><span class="tag {{ transacao.tipo }}">{{ transacao.get_tipo_display }}</span></td>
+                    <td>{{ transacao.categoria|default:"-" }}</td>
+                    <td>{{ transacao.data }}</td>
+                    <td class="acoes">
+                        <a href="{% url 'transacoes:editar' transacao.id %}">Editar</a>
+                        <a href="{% url 'transacoes:excluir' transacao.id %}">Excluir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="vazio">Nenhuma transação cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,447 @@
+:root {
+    color-scheme: light;
+    --pagina: #f9f9f7;
+    --superficie: #fcfcfb;
+    --texto: #0b0b0b;
+    --texto-secundario: #52514e;
+    --texto-mutado: #898781;
+    --borda: #e1e0d9;
+    --anel: rgba(11, 11, 11, 0.10);
+
+    --primaria: #2a78d6;
+    --primaria-clara: #cde2fb;
+
+    --bom: #0ca30c;
+    --bom-claro: #cdeecd;
+    --critico: #d03b3b;
+    --critico-claro: #f8d7d7;
+
+    --cor-1: #2a78d6;
+    --cor-2: #eb6834;
+    --cor-3: #1baf7a;
+    --cor-4: #eda100;
+    --cor-5: #e87ba4;
+    --cor-6: #008300;
+    --cor-7: #4a3aa7;
+    --cor-8: #e34948;
+
+    --raio: 10px;
+    --sombra: 0 1px 3px rgba(11, 11, 11, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--pagina);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.navbar {
+    background: #14181f;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 28px;
+    border-bottom: 3px solid var(--primaria);
+}
+
+.navbar .marca {
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+}
+
+.navbar .marca span {
+    color: var(--primaria-clara);
+}
+
+.navbar .abas {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.navbar .aba {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+}
+
+.navbar .aba.ativa {
+    background: var(--primaria);
+    color: #fff;
+    font-weight: 600;
+}
+
+.navbar .aba.futura {
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+.container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+}
+
+.topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.topo h1 {
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+}
+
+.topo .subtitulo {
+    color: var(--texto-secundario);
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+.botao {
+    display: inline-block;
+    background: var(--primaria);
+    color: #fff;
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--raio);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.botao:hover {
+    background: #1c5cab;
+}
+
+.botao-secundario {
+    background: transparent;
+    color: var(--texto-secundario);
+    border: 1px solid var(--borda);
+}
+
+.botao-secundario:hover {
+    background: var(--borda);
+}
+
+.botao-perigo {
+    background: var(--critico);
+}
+
+.botao-perigo:hover {
+    background: #b32e2e;
+}
+
+/* Stat tiles / cartões de resumo */
+
+.cartoes-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-tile {
+    background: var(--superficie);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    border: 1px solid var(--anel);
+    padding: 18px 20px;
+}
+
+.stat-tile .rotulo {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--texto-mutado);
+    margin-bottom: 8px;
+}
+
+.stat-tile .valor {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.stat-tile.receitas .valor { color: var(--bom); }
+.stat-tile.despesas .valor { color: var(--critico); }
+.stat-tile.saldo.positivo .valor { color: var(--bom); }
+.stat-tile.saldo.negativo .valor { color: var(--critico); }
+
+.medidor {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+}
+
+.medidor .trilha {
+    background: var(--borda);
+    width: 100%;
+    height: 100%;
+}
+
+.medidor .preenchimento {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.stat-tile.receitas .preenchimento { background: var(--bom); }
+.stat-tile.despesas .preenchimento { background: var(--critico); }
+.stat-tile.saldo.positivo .preenchimento { background: var(--bom); }
+.stat-tile.saldo.negativo .preenchimento { background: var(--critico); }
+
+.stat-tile .legenda-medidor {
+    font-size: 0.78rem;
+    color: var(--texto-mutado);
+    margin-top: 6px;
+}
+
+/* Painéis: categorias + tabela */
+
+.grade-painel {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) 2fr;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 760px) {
+    .grade-painel {
+        grid-template-columns: 1fr;
+    }
+}
+
+.painel {
+    background: var(--superficie);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    border: 1px solid var(--anel);
+    overflow: hidden;
+}
+
+.painel-cabecalho {
+    padding: 16px 18px 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.lista-categorias {
+    list-style: none;
+    margin: 0;
+    padding: 8px 18px 18px;
+}
+
+.lista-categorias li {
+    padding: 10px 0;
+}
+
+.lista-categorias .linha-categoria {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    margin-bottom: 6px;
+}
+
+.lista-categorias .nome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pingo {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.pingo.cor-1 { background: var(--cor-1); }
+.pingo.cor-2 { background: var(--cor-2); }
+.pingo.cor-3 { background: var(--cor-3); }
+.pingo.cor-4 { background: var(--cor-4); }
+.pingo.cor-5 { background: var(--cor-5); }
+.pingo.cor-6 { background: var(--cor-6); }
+.pingo.cor-7 { background: var(--cor-7); }
+.pingo.cor-8 { background: var(--cor-8); }
+
+.barra-categoria {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--borda);
+    overflow: hidden;
+}
+
+.barra-categoria span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.barra-categoria span.cor-1 { background: var(--cor-1); }
+.barra-categoria span.cor-2 { background: var(--cor-2); }
+.barra-categoria span.cor-3 { background: var(--cor-3); }
+.barra-categoria span.cor-4 { background: var(--cor-4); }
+.barra-categoria span.cor-5 { background: var(--cor-5); }
+.barra-categoria span.cor-6 { background: var(--cor-6); }
+.barra-categoria span.cor-7 { background: var(--cor-7); }
+.barra-categoria span.cor-8 { background: var(--cor-8); }
+
+.painel-vazio {
+    padding: 24px 18px;
+    color: var(--texto-mutado);
+    font-size: 0.88rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--texto-mutado);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--borda);
+}
+
+tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--borda);
+    font-size: 0.92rem;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: #fafbfc;
+}
+
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.tag.receita {
+    background: var(--bom-claro);
+    color: #096b09;
+}
+
+.tag.despesa {
+    background: var(--critico-claro);
+    color: #942929;
+}
+
+.acoes a {
+    color: var(--texto-mutado);
+    text-decoration: none;
+    font-size: 0.84rem;
+    margin-right: 12px;
+}
+
+.acoes a:hover {
+    color: var(--primaria);
+    text-decoration: underline;
+}
+
+.vazio {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--texto-mutado);
+}
+
+.secao-tabela {
+    margin-top: 20px;
+}
+
+/* Formulários */
+
+.cartao-formulario {
+    background: var(--superficie);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    border: 1px solid var(--anel);
+    padding: 28px;
+    max-width: 480px;
+}
+
+.cartao-formulario table {
+    width: 100%;
+}
+
+.cartao-formulario th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--texto-secundario);
+    padding: 10px 0 4px;
+    vertical-align: top;
+}
+
+.cartao-formulario td {
+    padding: 4px 0 14px;
+}
+
+.cartao-formulario input,
+.cartao-formulario select,
+.cartao-formulario textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    font-size: 0.94rem;
+    font-family: inherit;
+}
+
+.cartao-formulario input:focus,
+.cartao-formulario select:focus {
+    outline: none;
+    border-color: var(--primaria);
+}
+
+.erros {
+    background: var(--critico-claro);
+    color: #942929;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+}
+
+.voltar {
+    display: inline-block;
+    margin-top: 18px;
+    color: var(--texto-mutado);
+    text-decoration: none;
+    font-size: 0.88rem;
+}
+
+.voltar:hover {
+    color: var(--primaria);
+}
