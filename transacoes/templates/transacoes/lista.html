@@ -1,14 +1,33 @@
 {% extends "transacoes/base.html" %}
 
 {% block titulo %}Dashboard · Organizador Financeiro{% endblock %}
+{% block aba_transacoes %}ativa{% endblock %}
 
 {% block conteudo %}
-<div class="topo">
-    <div>
-        <h1>Dashboard financeiro</h1>
-        <p class="subtitulo">Visão geral das suas transações</p>
+<div class="topo topo-dashboard">
+    <h1 class="titulo-dashboard">Dashboard financeiro</h1>
+    <div class="topo-acoes">
+        <div class="filtro-periodo-wrap">
+            <span class="rotulo">Competência:</span>
+            <form method="get" class="filtro-periodo">
+                {% for valor in mostrar_atual %}<input type="hidden" name="mostrar" value="{{ valor }}">{% endfor %}
+                <select name="mes" onchange="this.form.submit()">
+                    {% for numero, nome in meses %}
+                    <option value="{{ numero }}" {% if numero == mes_selecionado %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                <select name="ano" onchange="this.form.submit()">
+                    {% for ano in anos_disponiveis %}
+                    <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="botoes-topo">
+            <a href="{% url 'leitor_fatura:upload' %}" class="botao botao-secundario">Importar fatura</a>
+            <a href="{% url 'transacoes:cadastrar' %}" class="botao">+ Nova transação</a>
+        </div>
     </div>
-    <a href="{% url 'transacoes:cadastrar' %}" class="botao">+ Nova transação</a>
 </div>
 
 <div class="cartoes-resumo">
@@ -46,9 +65,37 @@
             {% if saldo_positivo %}{{ percentual_economia }}% das receitas preservado{% else %}Resultado negativo no período{% endif %}
         </p>
     </div>
+
+    <div class="stat-tile grafico-tile">
+        <span class="rotulo">Receitas x Despesas</span>
+        <div class="grafico-barras">
+            <div class="grafico-barra-wrap">
+                <div class="grafico-barra-trilha">
+                    <div class="grafico-barra-fill receitas" style="height: {{ grafico_pct_receitas }}%"></div>
+                </div>
+                <span class="grafico-barra-valor">{{ total_receitas }}</span>
+                <span class="grafico-barra-label">Receitas</span>
+            </div>
+            <div class="grafico-barra-wrap">
+                <div class="grafico-barra-trilha">
+                    <div class="grafico-barra-fill despesas" style="height: {{ grafico_pct_despesas }}%"></div>
+                </div>
+                <span class="grafico-barra-valor">{{ total_despesas }}</span>
+                <span class="grafico-barra-label">Despesas</span>
+            </div>
+            <div class="grafico-barra-wrap">
+                <div class="grafico-barra-trilha">
+                    <div class="grafico-barra-fill saldo-grafico {% if saldo_positivo %}positivo{% else %}negativo{% endif %}" style="height: {{ grafico_pct_saldo }}%"></div>
+                </div>
+                <span class="grafico-barra-valor">{{ saldo }}</span>
+                <span class="grafico-barra-label">Saldo</span>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="grade-painel">
+<div class="grade-painel {% if mostrar_despesa and mostrar_receita %}grade-painel-dupla{% else %}grade-painel-unica{% endif %}">
+    {% if mostrar_despesa %}
     <div class="painel">
         <div class="painel-cabecalho">Despesas por categoria</div>
         {% if despesas_por_categoria %}
@@ -66,42 +113,120 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="painel-vazio">Nenhuma despesa cadastrada ainda.</p>
+        <p class="painel-vazio">Nenhuma despesa nesse período.</p>
         {% endif %}
     </div>
+    {% endif %}
 
+    {% if mostrar_receita %}
     <div class="painel">
-        <table>
-            <thead>
-                <tr>
-                    <th>Descrição</th>
-                    <th>Valor</th>
-                    <th>Tipo</th>
-                    <th>Categoria</th>
-                    <th>Data</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transacao in transacoes %}
-                <tr>
-                    <td>{{ transacao.descricao }}</td>
-                    <td>{{ transacao.valor }}</td>
-                    <td><span class="tag {{ transacao.tipo }}">{{ transacao.get_tipo_display }}</span></td>
-                    <td>{{ transacao.categoria|default:"-" }}</td>
-                    <td>{{ transacao.data }}</td>
-                    <td class="acoes">
-                        <a href="{% url 'transacoes:editar' transacao.id %}">Editar</a>
-                        <a href="{% url 'transacoes:excluir' transacao.id %}">Excluir</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="vazio">Nenhuma transação cadastrada.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="painel-cabecalho">Receitas por categoria</div>
+        {% if receitas_por_categoria %}
+        <ul class="lista-categorias">
+            {% for linha in receitas_por_categoria %}
+            <li>
+                <div class="linha-categoria">
+                    <span class="nome"><span class="pingo {{ linha.cor }}"></span>{{ linha.categoria }}</span>
+                    <span>{{ linha.total_formatado }} · {{ linha.percentual }}%</span>
+                </div>
+                <div class="barra-categoria">
+                    <span class="{{ linha.cor }}" style="width: {{ linha.percentual }}%"></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="painel-vazio">Nenhuma receita nesse período.</p>
+        {% endif %}
     </div>
+    {% endif %}
+</div>
+
+<form method="get" class="filtro-tipo">
+    <input type="hidden" name="mes" value="{{ mes_selecionado }}">
+    <input type="hidden" name="ano" value="{{ ano_selecionado }}">
+    <label class="opcao-tipo">
+        <input type="checkbox" name="mostrar" value="despesa" onchange="this.form.submit()" {% if mostrar_despesa %}checked{% endif %}>
+        Despesas
+    </label>
+    <label class="opcao-tipo">
+        <input type="checkbox" name="mostrar" value="receita" onchange="this.form.submit()" {% if mostrar_receita %}checked{% endif %}>
+        Receitas
+    </label>
+</form>
+
+<div class="painel secao-tabela">
+    <table>
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th>Natureza</th>
+                <th>Banco</th>
+                <th>Parcela</th>
+                <th>Valor total</th>
+                <th>Data da compra</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grupo in grupos_transacoes %}
+            <tr class="linha-grupo-banco">
+                <td colspan="10">{{ grupo.banco }}</td>
+            </tr>
+            {% for transacao in grupo.itens %}
+            <tr>
+                <td>{{ transacao.descricao }}</td>
+                <td>{{ transacao.valor }}</td>
+                <td><span class="tag {{ transacao.tipo }}">{{ transacao.get_tipo_display }}</span></td>
+                <td>
+                    <form method="post" action="{% url 'transacoes:atualizar_categoria' transacao.id %}" class="form-select-rapido">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
+                        <select name="categoria" onchange="this.form.submit()">
+                            <option value="" {% if not transacao.categoria_id %}selected{% endif %}>Sem categoria</option>
+                            {% for categoria in categorias_disponiveis %}
+                            <option value="{{ categoria.id }}" {% if categoria.id == transacao.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" action="{% url 'transacoes:atualizar_natureza' transacao.id %}" class="form-select-rapido">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
+                        <select name="natureza" onchange="this.form.submit()">
+                            <option value="" {% if not transacao.natureza %}selected{% endif %}>-</option>
+                            <option value="fixo" {% if transacao.natureza == 'fixo' %}selected{% endif %}>Fixo</option>
+                            <option value="variavel" {% if transacao.natureza == 'variavel' %}selected{% endif %}>Variável</option>
+                            <option value="investimento" {% if transacao.natureza == 'investimento' %}selected{% endif %}>Investimento</option>
+                        </select>
+                    </form>
+                </td>
+                <td>{{ transacao.get_banco_display|default:"-" }}</td>
+                <td>
+                    {% if transacao.parcela_atual and transacao.parcela_total %}
+                        {{ transacao.parcela_atual }}/{{ transacao.parcela_total }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ transacao.valor_total|default:"-" }}</td>
+                <td>{{ transacao.data|date:"d/m/y" }}</td>
+                <td class="acoes">
+                    <a href="{% url 'transacoes:editar' transacao.id %}">Editar</a>
+                    <a href="{% url 'transacoes:excluir' transacao.id %}">Excluir</a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% empty %}
+            <tr>
+                <td colspan="10" class="vazio">Nenhuma transação nesse período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

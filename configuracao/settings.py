@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'transacoes',
+    'categoria',
+    'leitor_fatura',
 ]
 
 MIDDLEWARE = [

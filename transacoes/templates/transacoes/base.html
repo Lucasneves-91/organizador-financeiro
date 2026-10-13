@@ -10,13 +10,20 @@
     <nav class="navbar">
         <div class="marca">🗂 Organizador<span>Financeiro</span></div>
         <div class="abas">
-            <span class="aba ativa">1. Transações</span>
-            <span class="aba futura" title="Em breve">2. Categorias</span>
-            <span class="aba futura" title="Em breve">3. Orçamento</span>
+            <a class="aba {% block aba_transacoes %}{% endblock %}" href="{% url 'transacoes:lista' %}">1. Transações</a>
+            <a class="aba {% block aba_importar %}{% endblock %}" href="{% url 'leitor_fatura:upload' %}">2. Importar fatura</a>
+            <a class="aba {% block aba_categorias %}{% endblock %}" href="{% url 'categoria:lista_categorias' %}">3. Categorias</a>
             <span class="aba futura" title="Em breve">4. Relatórios</span>
         </div>
     </nav>
     <div class="container">
+        {% if messages %}
+        <ul class="mensagens">
+            {% for mensagem in messages %}
+            <li class="mensagem {{ mensagem.tags }}">{{ mensagem }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% block conteudo %}{% endblock %}
     </div>
 </body>

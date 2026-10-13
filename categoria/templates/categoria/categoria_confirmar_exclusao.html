@@ -1,0 +1,21 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Excluir categoria · Organizador Financeiro{% endblock %}
+{% block aba_categorias %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo">
+    <h1>Confirmar exclusão</h1>
+</div>
+
+<div class="cartao-formulario">
+    <p>Tem certeza que deseja excluir a categoria <strong>"{{ categoria.nome }}"</strong>?</p>
+    <p class="subtitulo">Transações que usam essa categoria ficarão sem categoria.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="botao botao-perigo">Confirmar exclusão</button>
+        <a href="{% url 'categoria:lista_categorias' %}" class="botao botao-secundario">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

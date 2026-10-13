@@ -1,0 +1,54 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Categorias · Organizador Financeiro{% endblock %}
+{% block aba_categorias %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo">
+    <div>
+        <h1>Categorias</h1>
+        <p class="subtitulo">Organize suas categorias de receita e despesa</p>
+    </div>
+    <a href="{% url 'categoria:cadastrar_categoria' %}" class="botao">+ Nova categoria</a>
+</div>
+
+<p class="voltar" style="margin-bottom: 16px;">
+    <a href="{% url 'categoria:lista_regras' %}">Gerenciar regras de categorização automática &rarr;</a>
+</p>
+
+<div class="painel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for categoria in categorias %}
+            <tr>
+                <td>{{ categoria.nome }}</td>
+                <td>{{ categoria.get_tipo_display }}</td>
+                <td>
+                    {% if categoria.ativo %}
+                    <span class="tag receita">Ativa</span>
+                    {% else %}
+                    <span class="tag despesa">Inativa</span>
+                    {% endif %}
+                </td>
+                <td class="acoes">
+                    <a href="{% url 'categoria:editar_categoria' categoria.id %}">Editar</a>
+                    <a href="{% url 'categoria:excluir_categoria' categoria.id %}">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="vazio">Nenhuma categoria cadastrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

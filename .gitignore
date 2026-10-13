@@ -3,3 +3,36 @@
 __pycache__/
 *.pyc
 db.sqlite3
+
+# Ambientes virtuais com outros nomes comuns
+venv/
+env/
+ENV/
+
+# Artefatos de build/teste do Python
+*.pyo
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Saída do Django que não precisa ir pro repo (coletados em runtime)
+staticfiles/
+media/
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

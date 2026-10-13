@@ -1,0 +1,90 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Pré-visualizar importação · Organizador Financeiro{% endblock %}
+{% block aba_importar %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo">
+    <div>
+        <h1>Pré-visualizar importação</h1>
+        <p class="subtitulo">
+            {{ lote.arquivo_nome }} · {{ lote.get_banco_display }} · {{ lancamentos|length }} lançamento(s)
+            {% if total_duplicados %}· {{ total_duplicados }} já importado(s) antes{% endif %}
+            {% if total_duplicados_valor %}· {{ total_duplicados_valor }} com valor repetido no mês{% endif %}
+        </p>
+        <p class="subtitulo">
+            Vai contar como <strong>{{ mes_referencia_nome }}/{{ lote.ano_referencia }}</strong> no dashboard
+            (mês em que essa fatura está sendo importada), independente da data de cada compra.
+        </p>
+    </div>
+</div>
+
+<form method="post" action="{% url 'leitor_fatura:confirmar' lote.id %}">
+    {% csrf_token %}
+    <div class="painel secao-tabela">
+        <table>
+            <thead>
+                <tr>
+                    <th>Incluir</th>
+                    <th>Data da compra</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Tipo</th>
+                    <th>Parcela</th>
+                    <th>Categoria</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in lancamentos %}
+                <tr class="{% if item.duplicado %}linha-duplicada{% endif %}">
+                    <td>
+                        <input type="checkbox" name="selecionado" value="{{ item.id }}" {% if item.selecionado %}checked{% endif %}>
+                    </td>
+                    <td>{{ item.data|date:"d/m/y" }}</td>
+                    <td>
+                        {{ item.descricao }}
+                        {% if item.duplicado %}<span class="tag despesa">já importado</span>{% endif %}
+                        {% if item.duplicado_valor %}
+                        <span class="tag aviso" title="{{ item.duplicado_valor_descricao }}">valor repetido no mês</span>
+                        <div class="aviso-detalhe">{{ item.duplicado_valor_descricao }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.valor }}</td>
+                    <td><span class="tag {{ item.tipo }}">{{ item.get_tipo_display }}</span></td>
+                    <td>
+                        {% if item.parcela_atual and item.parcela_total %}
+                            {{ item.parcela_atual }}/{{ item.parcela_total }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <select name="categoria_{{ item.id }}">
+                            <option value="">Sem categoria</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if categoria.id == item.categoria_sugerida_id %}selected{% endif %}>
+                                {{ categoria.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="vazio">Nenhum lançamento encontrado nesse arquivo.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="topo-acoes" style="margin-top: 16px;">
+        <button type="submit" class="botao">Confirmar importação</button>
+    </div>
+</form>
+
+<form method="post" action="{% url 'leitor_fatura:cancelar' lote.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="botao botao-secundario" style="margin-top: 8px;">Cancelar importação</button>
+</form>
+{% endblock %}

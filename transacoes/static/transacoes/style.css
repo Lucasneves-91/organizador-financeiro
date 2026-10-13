@@ -75,6 +75,12 @@ body {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.55);
     white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.navbar .aba:hover {
+    color: #fff;
 }
 
 .navbar .aba.ativa {
@@ -88,7 +94,7 @@ body {
 }
 
 .container {
-    max-width: 1080px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 28px 24px 64px;
 }
@@ -110,6 +116,21 @@ body {
 .topo .subtitulo {
     color: var(--texto-secundario);
     font-size: 0.92rem;
+    margin: 0;
+}
+
+.topo-dashboard {
+    flex-direction: column;
+    align-items: center;
+}
+
+.titulo-dashboard {
+    align-self: center;
+    text-align: center;
+    font-size: 2.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     margin: 0;
 }
 
@@ -239,7 +260,7 @@ body {
 }
 
 .painel-cabecalho {
-    padding: 16px 18px 4px;
+    padding: 18px 20px 4px;
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -247,7 +268,7 @@ body {
 .lista-categorias {
     list-style: none;
     margin: 0;
-    padding: 8px 18px 18px;
+    padding: 8px 20px 18px;
 }
 
 .lista-categorias li {
@@ -378,6 +399,25 @@ tbody tr:hover {
 
 .secao-tabela {
     margin-top: 20px;
+    /* Tabela com muitas colunas (transações, preview de importação): em telas
+       estreitas ela rola na horizontal em vez de ficar cortada/escondida. */
+    overflow-x: auto;
+}
+
+.secao-tabela table {
+    min-width: 760px;
+}
+
+.secao-tabela th,
+.secao-tabela td {
+    padding: 9px 10px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+}
+
+.secao-tabela td:first-child,
+.secao-tabela th:first-child {
+    white-space: normal;
 }
 
 /* Formulários */
@@ -444,4 +484,233 @@ tbody tr:hover {
 
 .voltar:hover {
     color: var(--primaria);
+}
+
+/* Filtro de período + ações do topo */
+
+.topo-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-self: stretch;
+}
+
+.filtro-periodo-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+}
+
+.filtro-periodo-wrap .rotulo {
+    margin-bottom: 0;
+}
+
+.filtro-periodo {
+    display: flex;
+    gap: 8px;
+}
+
+.botoes-topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Filtro Receita/Despesa acima dos painéis de categoria */
+
+.filtro-tipo {
+    display: flex;
+    gap: 18px;
+    margin: 20px 0;
+    justify-content: flex-start;
+}
+
+.opcao-tipo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    cursor: pointer;
+}
+
+.opcao-tipo input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primaria);
+    cursor: pointer;
+}
+
+.grade-painel-unica {
+    grid-template-columns: 1fr;
+}
+
+.filtro-periodo select {
+    padding: 8px 10px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    background: var(--superficie);
+    color: var(--texto);
+}
+
+/* Cartão com o gráfico Receitas x Despesas */
+
+.stat-tile.grafico-tile {
+    grid-column: span 1;
+}
+
+.grafico-barras {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    gap: 10px;
+    height: 100px;
+    margin-top: 10px;
+}
+
+.grafico-barra-wrap {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.grafico-barra-trilha {
+    width: 100%;
+    max-width: 34px;
+    height: 64px;
+    display: flex;
+    align-items: flex-end;
+    background: var(--borda);
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+}
+
+.grafico-barra-fill {
+    width: 100%;
+    min-height: 3px;
+}
+
+.grafico-barra-fill.receitas { background: var(--bom); }
+.grafico-barra-fill.despesas { background: var(--critico); }
+.grafico-barra-fill.saldo-grafico.positivo { background: var(--bom); }
+.grafico-barra-fill.saldo-grafico.negativo { background: var(--critico); }
+
+.grafico-barra-valor {
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.grafico-barra-label {
+    font-size: 0.68rem;
+    color: var(--texto-mutado);
+}
+
+.grade-painel-dupla {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 760px) {
+    .grade-painel-dupla {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mensagens flash (django.contrib.messages) */
+
+.mensagens {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+}
+
+.mensagens .mensagem {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    margin-bottom: 8px;
+}
+
+.mensagens .success {
+    background: var(--bom-claro);
+    color: #096b09;
+}
+
+.mensagens .info {
+    background: var(--primaria-clara);
+    color: #1c5cab;
+}
+
+.mensagens .error {
+    background: var(--critico-claro);
+    color: #942929;
+}
+
+/* Importação de fatura: tabela de preview */
+
+.secao-tabela select {
+    padding: 6px 8px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: var(--superficie);
+    color: var(--texto);
+}
+
+.form-select-rapido {
+    margin: 0;
+}
+
+/* Coluna "Ações" sempre visível, mesmo rolando a tabela pro lado */
+.secao-tabela th:last-child,
+.secao-tabela td:last-child {
+    position: sticky;
+    right: 0;
+    background: var(--superficie);
+    box-shadow: -6px 0 6px -6px rgba(11, 11, 11, 0.15);
+    white-space: nowrap;
+}
+
+.secao-tabela thead th:last-child {
+    background: var(--superficie);
+}
+
+.linha-grupo-banco td {
+    background: var(--pagina);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--texto-mutado);
+    padding: 8px 16px;
+}
+
+.linha-duplicada {
+    opacity: 0.55;
+}
+
+.linha-duplicada td {
+    font-style: italic;
+}
+
+.tag.aviso {
+    background: #fdecc8;
+    color: #8a5a00;
+    cursor: help;
+}
+
+.aviso-detalhe {
+    font-size: 0.74rem;
+    color: var(--texto-mutado);
+    margin-top: 2px;
 }

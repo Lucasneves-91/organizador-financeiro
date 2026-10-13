@@ -1,0 +1,27 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Excluir fatura · Organizador Financeiro{% endblock %}
+{% block aba_importar %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo">
+    <h1>Confirmar exclusão da fatura</h1>
+</div>
+
+<div class="cartao-formulario">
+    <p>
+        Tem certeza que deseja excluir a fatura <strong>"{{ lote.arquivo_nome }}"</strong>
+        ({{ lote.get_banco_display }}, referência {{ mes_referencia_nome }}/{{ lote.ano_referencia }})?
+    </p>
+    <p class="subtitulo">
+        Isso vai apagar os <strong>{{ total_lancamentos }}</strong> lançamento(s) que vieram dela — inclusive
+        se você editou categoria, natureza ou qualquer outro campo depois da importação.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="botao botao-perigo">Excluir fatura inteira</button>
+        <a href="{% url 'leitor_fatura:lista_faturas' %}" class="botao botao-secundario">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
