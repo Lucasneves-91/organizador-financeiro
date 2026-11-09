@@ -1,5 +1,4 @@
 import hashlib
-from datetime import date
 
 from django.db import transaction
 from django.db.models import Q
@@ -63,7 +62,7 @@ def _checar_duplicidade_por_valor(lancamento, mes_referencia: int, ano_referenci
 
 class ImportacaoService:
     @staticmethod
-    def processar(arquivo_upload) -> ImportacaoLote:
+    def processar(arquivo_upload, mes_referencia: int, ano_referencia: int) -> ImportacaoLote:
         """Lê o arquivo enviado, detecta o banco pelo cabeçalho, faz o parse e
         guarda o resultado como um lote pendente de confirmação."""
         conteudo = arquivo_upload.read().decode('utf-8-sig')
@@ -77,16 +76,15 @@ class ImportacaoService:
 
         lancamentos_brutos = leitor_cls().ler(conteudo)
 
-        # Mês de referência da fatura inteira = mês em que ela foi importada, não a
+        # Mês de referência da fatura inteira = o mês escolhido no formulário de
+        # importação (por padrão, o mês que estava selecionado no dashboard), não a
         # data de cada compra (uma compra de agosto pode ser cobrada numa fatura
         # importada em outubro, e é em outubro que ela deve contar no dashboard).
-        hoje = date.today()
-
         lote = ImportacaoLote.objects.create(
             arquivo_nome=getattr(arquivo_upload, 'name', 'arquivo.csv'),
             banco=leitor_cls.banco,
-            mes_referencia=hoje.month,
-            ano_referencia=hoje.year,
+            mes_referencia=mes_referencia,
+            ano_referencia=ano_referencia,
         )
 
         itens = []

@@ -1,0 +1,104 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Comparativo anual · Organizador Financeiro{% endblock %}
+{% block aba_transacoes %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo topo-dashboard">
+    <h1 class="titulo-dashboard">Comparativo anual</h1>
+    <div class="topo-acoes">
+        <div class="filtro-periodo-wrap">
+            <span class="rotulo">Ano:</span>
+            <form method="get" class="filtro-periodo">
+                <select name="ano" onchange="this.form.submit()">
+                    {% for ano in anos_disponiveis %}
+                    <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="botoes-topo">
+            <a href="{% url 'transacoes:lista' %}" class="botao botao-secundario">Voltar</a>
+        </div>
+    </div>
+</div>
+
+<div class="painel secao-tabela secao-anual">
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                {% for mes in meses_dados %}
+                <th>{{ mes.nome }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="rotulo-linha">Receitas</td>
+                {% for mes in meses_dados %}
+                <td class="col-receitas">{% if mes.tem_dados %}{{ mes.receitas }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="rotulo-linha">Despesas</td>
+                {% for mes in meses_dados %}
+                <td class="col-despesas">{% if mes.tem_dados %}{{ mes.despesas }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr class="linha-saldo">
+                <td class="rotulo-linha">Saldo</td>
+                {% for mes in meses_dados %}
+                <td class="{% if mes.tem_dados %}{% if mes.saldo_positivo %}positivo{% else %}negativo{% endif %}{% endif %}">{% if mes.tem_dados %}{{ mes.saldo }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+        <tbody class="secao-espacada">
+            <tr>
+                <td class="rotulo-linha">Gastos Variáveis</td>
+                {% for mes in meses_dados %}
+                <td>{% if mes.tem_dados %}{{ mes.gastos_variaveis }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="rotulo-linha">Gastos Fixo</td>
+                {% for mes in meses_dados %}
+                <td>{% if mes.tem_dados %}{{ mes.gastos_fixos }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="rotulo-linha">Investimentos</td>
+                {% for mes in meses_dados %}
+                <td>{% if mes.tem_dados %}{{ mes.investimentos }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+        <tbody class="secao-espacada">
+            <tr class="linha-cenario-titulo">
+                <td colspan="13">
+                    Cenário Atual x Cenário Ideal
+                    (no máximo {{ limite_ideal_fixo }}% de Gastos Fixos / no máximo {{ limite_ideal_variavel }}% de Gastos Variáveis / no mínimo {{ limite_ideal_investimento }}% de Investimentos)
+                </td>
+            </tr>
+            <tr>
+                <td class="rotulo-linha">% Gastos Variáveis</td>
+                {% for mes in meses_dados %}
+                <td>{% if mes.pct_variavel is not None %}{{ mes.pct_variavel }}%{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="rotulo-linha">% Gastos Fixos</td>
+                {% for mes in meses_dados %}
+                <td class="{% if mes.pct_fixo is not None %}{% if mes.pct_fixo_ok %}positivo{% else %}negativo{% endif %}{% endif %}">{% if mes.pct_fixo is not None %}{{ mes.pct_fixo }}%{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="rotulo-linha">% Investimentos</td>
+                {% for mes in meses_dados %}
+                <td class="{% if mes.pct_investimento is not None %}{% if mes.pct_investimento_ok %}positivo{% else %}negativo{% endif %}{% endif %}">{% if mes.pct_investimento is not None %}{{ mes.pct_investimento }}%{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

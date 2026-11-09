@@ -714,3 +714,70 @@ tbody tr:hover {
     color: var(--texto-mutado);
     margin-top: 2px;
 }
+
+/* Coluna "Dividido" + total no rodapé da tabela de transações */
+
+.valor-dividido {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--texto-secundario);
+}
+
+.linha-total-dividido td {
+    font-weight: 700;
+    background: var(--pagina);
+    border-top: 2px solid var(--borda);
+}
+
+/* Comparativo anual */
+
+.secao-anual table {
+    min-width: 1100px;
+}
+
+.secao-anual td,
+.secao-anual th {
+    text-align: center;
+}
+
+.secao-anual td.rotulo-linha,
+.secao-anual th:first-child {
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.secao-anual .col-receitas { color: var(--bom); }
+.secao-anual .col-despesas { color: var(--critico); }
+
+.secao-anual .linha-saldo td {
+    font-weight: 700;
+}
+
+.secao-anual td.positivo,
+.secao-anual td.positivo.rotulo-linha {
+    color: var(--bom);
+    font-weight: 700;
+}
+
+.secao-anual td.negativo,
+.secao-anual td.negativo.rotulo-linha {
+    color: var(--critico);
+    font-weight: 700;
+}
+
+.secao-anual .secao-espacada td {
+    border-top: 1px solid var(--borda);
+}
+
+.secao-anual .linha-cenario-titulo td {
+    background: var(--pagina);
+    font-weight: 700;
+    text-align: left;
+    white-space: normal;
+    color: var(--texto-secundario);
+    font-size: 0.8rem;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}

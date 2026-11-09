@@ -1,8 +1,11 @@
+from datetime import date
+
 from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from categoria.models import Categoria
+from transacoes.services.transacao_service import TransacaoService
 from transacoes.views import NOMES_MESES
 
 from .forms import UploadFaturaForm
@@ -18,10 +21,15 @@ def upload(request):
             if not isinstance(arquivos, list):
                 arquivos = [arquivos]
 
+            mes_referencia = form.cleaned_data['mes_referencia']
+            ano_referencia = form.cleaned_data['ano_referencia']
+
             lotes_criados = []
             for arquivo in arquivos:
                 try:
-                    lotes_criados.append(ImportacaoService.processar(arquivo))
+                    lotes_criados.append(
+                        ImportacaoService.processar(arquivo, mes_referencia, ano_referencia)
+                    )
                 except FormatoNaoReconhecido as erro:
                     messages.error(request, f'{arquivo.name}: {erro}')
                 except (UnicodeDecodeError, ValueError) as erro:
@@ -36,7 +44,17 @@ def upload(request):
                 )
                 return redirect('leitor_fatura:lista_faturas')
     else:
-        form = UploadFaturaForm()
+        # Pré-preenche com o mês/ano que estava selecionado no dashboard (link "Importar
+        # fatura" manda ?mes=&ano=), senão com o mês/competência mais recente conhecido.
+        mes_param = request.GET.get('mes')
+        ano_param = request.GET.get('ano')
+        if mes_param and ano_param:
+            inicial = {'mes_referencia': int(mes_param), 'ano_referencia': int(ano_param)}
+        else:
+            hoje = date.today()
+            mes, ano = TransacaoService.mes_ano_mais_recente() or (hoje.month, hoje.year)
+            inicial = {'mes_referencia': mes, 'ano_referencia': ano}
+        form = UploadFaturaForm(initial=inicial)
     return render(request, 'leitor_fatura/upload.html', {'form': form})
 
 

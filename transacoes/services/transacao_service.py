@@ -45,6 +45,26 @@ class TransacaoService:
         ]
 
     @staticmethod
+    def obter_totais_por_natureza(mes=None, ano=None) -> dict:
+        """Soma das despesas do período por natureza (fixo/variável/investimento) —
+        base da seção "Cenário Atual x Cenário Ideal" do comparativo anual."""
+        base = TransacaoService._filtrar_por_periodo(
+            Transacao.objects.filter(tipo=Transacao.Tipo.DESPESA), mes, ano
+        )
+        totais = {valor: Decimal('0') for valor, _ in Transacao.Natureza.choices}
+        for item in base.values('natureza').annotate(total=Sum('valor')):
+            if item['natureza'] in totais:
+                totais[item['natureza']] = item['total']
+        return totais
+
+    @staticmethod
+    def soma_dividido(transacoes) -> Decimal:
+        return sum(
+            (transacao.valor_dividido for transacao in transacoes if transacao.valor_dividido is not None),
+            Decimal('0'),
+        )
+
+    @staticmethod
     def obter_totais(mes=None, ano=None) -> dict:
         base = TransacaoService._filtrar_por_periodo(Transacao.objects.all(), mes, ano)
 
@@ -204,4 +224,12 @@ class TransacaoService:
         transacao = TransacaoService.buscar(transacao_id)
         transacao.natureza = natureza
         transacao.save(update_fields=['natureza'])
+        return transacao
+
+    @staticmethod
+    def atualizar_dividido(transacao_id: int, dividido: str) -> Transacao:
+        """Ajuste rápido só da divisão, direto na listagem (sem abrir o form inteiro)."""
+        transacao = TransacaoService.buscar(transacao_id)
+        transacao.dividido = dividido
+        transacao.save(update_fields=['dividido'])
         return transacao

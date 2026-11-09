@@ -1,4 +1,5 @@
 {% extends "transacoes/base.html" %}
+{% load formatadores_tags %}
 
 {% block titulo %}Dashboard · Organizador Financeiro{% endblock %}
 {% block aba_transacoes %}ativa{% endblock %}
@@ -24,7 +25,9 @@
             </form>
         </div>
         <div class="botoes-topo">
-            <a href="{% url 'leitor_fatura:upload' %}" class="botao botao-secundario">Importar fatura</a>
+            <a href="{% url 'transacoes:anual' %}" class="botao botao-secundario">Anual</a>
+            <a href="{% url 'transacoes:relatorio_mensal_pdf' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}" class="botao botao-secundario">Relatório PDF</a>
+            <a href="{% url 'leitor_fatura:upload' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}" class="botao botao-secundario">Importar fatura</a>
             <a href="{% url 'transacoes:cadastrar' %}" class="botao">+ Nova transação</a>
         </div>
     </div>
@@ -167,6 +170,7 @@
                 <th>Banco</th>
                 <th>Parcela</th>
                 <th>Valor total</th>
+                <th>Dividido</th>
                 <th>Data da compra</th>
                 <th>Ações</th>
             </tr>
@@ -174,7 +178,7 @@
         <tbody>
             {% for grupo in grupos_transacoes %}
             <tr class="linha-grupo-banco">
-                <td colspan="10">{{ grupo.banco }}</td>
+                <td colspan="11">{{ grupo.banco }}</td>
             </tr>
             {% for transacao in grupo.itens %}
             <tr>
@@ -214,6 +218,19 @@
                     {% endif %}
                 </td>
                 <td>{{ transacao.valor_total|default:"-" }}</td>
+                <td>
+                    <form method="post" action="{% url 'transacoes:atualizar_dividido' transacao.id %}" class="form-select-rapido">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
+                        <select name="dividido" onchange="this.form.submit()">
+                            <option value="" {% if not transacao.dividido %}selected{% endif %}>-</option>
+                            {% for valor, rotulo in opcoes_dividido %}
+                            <option value="{{ valor }}" {% if valor == transacao.dividido %}selected{% endif %}>{{ rotulo }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% if transacao.valor_dividido %}<div class="valor-dividido">{{ transacao.valor_dividido|moeda }}</div>{% endif %}
+                </td>
                 <td>{{ transacao.data|date:"d/m/y" }}</td>
                 <td class="acoes">
                     <a href="{% url 'transacoes:editar' transacao.id %}">Editar</a>
@@ -223,10 +240,19 @@
             {% endfor %}
             {% empty %}
             <tr>
-                <td colspan="10" class="vazio">Nenhuma transação nesse período.</td>
+                <td colspan="11" class="vazio">Nenhuma transação nesse período.</td>
             </tr>
             {% endfor %}
         </tbody>
+        {% if grupos_transacoes %}
+        <tfoot>
+            <tr class="linha-total-dividido">
+                <td colspan="8">Total dividido</td>
+                <td>{{ soma_dividido }}</td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+        {% endif %}
     </table>
 </div>
 {% endblock %}

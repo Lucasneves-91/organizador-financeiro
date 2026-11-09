@@ -22,13 +22,12 @@
     {% if form.non_field_errors %}
     <div class="erros">{{ form.non_field_errors }}</div>
     {% endif %}
-    {% if form.arquivos.errors %}
-    <div class="erros">{{ form.arquivos.errors }}</div>
-    {% endif %}
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.arquivos }}
+        <table>
+            {{ form.as_table }}
+        </table>
         <button type="submit" class="botao" style="margin-top: 16px;">Enviar e pré-visualizar</button>
     </form>
 </div>

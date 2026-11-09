@@ -1,5 +1,4 @@
-# Categorias de despesa iniciais, só pra não começar com a tela vazia — baseadas
-# na planilha que o usuário já usava. Livres pra editar/excluir depois.
+
 
 from django.db import migrations
 

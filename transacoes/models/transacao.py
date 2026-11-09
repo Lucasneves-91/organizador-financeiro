@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 
 
@@ -16,6 +18,10 @@ class Transacao(models.Model):
         FIXO = 'fixo', 'Fixo'
         VARIAVEL = 'variavel', 'Variável'
         INVESTIMENTO = 'investimento', 'Investimento'
+
+    class Dividido(models.TextChoices):
+        METADE = 'metade', 'Metade (50%)'
+        QUARENTA = 'quarenta', '40%'
 
     descricao = models.CharField(max_length=255)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
@@ -36,6 +42,7 @@ class Transacao(models.Model):
     parcela_atual = models.PositiveSmallIntegerField(null=True, blank=True)
     parcela_total = models.PositiveSmallIntegerField(null=True, blank=True)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    dividido = models.CharField(max_length=10, choices=Dividido.choices, blank=True)
 
     # Preenchido apenas em lançamentos vindos de importação de fatura (leitor_fatura),
     # usado para não importar o mesmo lançamento duas vezes.
@@ -47,3 +54,11 @@ class Transacao(models.Model):
 
     def __str__(self):
         return f'{self.descricao} ({self.tipo})'
+
+    @property
+    def valor_dividido(self):
+        if self.dividido == self.Dividido.METADE:
+            return self.valor / 2
+        if self.dividido == self.Dividido.QUARENTA:
+            return self.valor * Decimal('0.4')
+        return None

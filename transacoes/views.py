@@ -1,18 +1,26 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from categoria.models import Categoria
 
 from .forms import TransacaoForm
 from .helpers.formatadores import formatar_valor_monetario
+from .models import Transacao
+from .services.relatorio_pdf_service import RelatorioPdfService
 from .services.transacao_service import TransacaoService
 
 NOMES_MESES = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
+
+# Cenário ideal usado no comparativo anual (igual à planilha original).
+LIMITE_IDEAL_FIXO = 30
+LIMITE_IDEAL_VARIAVEL = 50
+LIMITE_IDEAL_INVESTIMENTO = 20
 
 
 def lista(request):
@@ -87,8 +95,88 @@ def lista(request):
         'mostrar_atual': mostrar_atual,
         'mostrar_receita': mostrar_receita,
         'mostrar_despesa': mostrar_despesa,
+        'opcoes_dividido': Transacao.Dividido.choices,
+        'soma_dividido': formatar_valor_monetario(TransacaoService.soma_dividido(transacoes)),
     }
     return render(request, 'transacoes/lista.html', contexto)
+
+
+def _percentual(parte, total):
+    if not total:
+        return None
+    return round(parte / total * 100)
+
+
+def _montar_dados_mes(numero_mes: int, ano: int) -> dict:
+    """Métricas do comparativo (Receitas/Despesas/Saldo + Gastos por natureza +
+    cenário ideal) de um único mês — usado pela página Anual e pelo relatório PDF."""
+    totais = TransacaoService.obter_totais(mes=numero_mes, ano=ano)
+    natureza = TransacaoService.obter_totais_por_natureza(mes=numero_mes, ano=ano)
+    receitas = totais['total_receitas']
+
+    pct_fixo = _percentual(natureza['fixo'], receitas)
+    pct_variavel = _percentual(natureza['variavel'], receitas)
+    pct_investimento = _percentual(natureza['investimento'], receitas)
+
+    return {
+        'nome': NOMES_MESES[numero_mes - 1],
+        'tem_dados': bool(receitas or totais['total_despesas']),
+        'receitas': formatar_valor_monetario(receitas),
+        'despesas': formatar_valor_monetario(totais['total_despesas']),
+        'saldo': formatar_valor_monetario(totais['saldo']),
+        'saldo_positivo': totais['saldo'] >= 0,
+        'gastos_variaveis': formatar_valor_monetario(natureza['variavel']),
+        'gastos_fixos': formatar_valor_monetario(natureza['fixo']),
+        'investimentos': formatar_valor_monetario(natureza['investimento']),
+        'pct_variavel': pct_variavel,
+        'pct_fixo': pct_fixo,
+        'pct_investimento': pct_investimento,
+        'pct_fixo_ok': pct_fixo is not None and pct_fixo <= LIMITE_IDEAL_FIXO,
+        'pct_investimento_ok': pct_investimento is not None and pct_investimento >= LIMITE_IDEAL_INVESTIMENTO,
+        'limite_ideal_fixo': LIMITE_IDEAL_FIXO,
+        'limite_ideal_variavel': LIMITE_IDEAL_VARIAVEL,
+        'limite_ideal_investimento': LIMITE_IDEAL_INVESTIMENTO,
+    }
+
+
+def anual(request):
+    ano_param = request.GET.get('ano')
+    if ano_param:
+        ano = int(ano_param)
+    else:
+        recente = TransacaoService.mes_ano_mais_recente()
+        ano = recente[1] if recente else date.today().year
+
+    anos_disponiveis = sorted(set(TransacaoService.anos_disponiveis()) | {ano}, reverse=True)
+    meses_dados = [_montar_dados_mes(numero, ano) for numero in range(1, 13)]
+
+    contexto = {
+        'meses_dados': meses_dados,
+        'ano_selecionado': ano,
+        'anos_disponiveis': anos_disponiveis,
+        'limite_ideal_fixo': LIMITE_IDEAL_FIXO,
+        'limite_ideal_variavel': LIMITE_IDEAL_VARIAVEL,
+        'limite_ideal_investimento': LIMITE_IDEAL_INVESTIMENTO,
+    }
+    return render(request, 'transacoes/anual.html', contexto)
+
+
+def relatorio_mensal_pdf(request):
+    mes_param = request.GET.get('mes')
+    ano_param = request.GET.get('ano')
+    if mes_param and ano_param:
+        mes, ano = int(mes_param), int(ano_param)
+    else:
+        hoje = date.today()
+        mes, ano = TransacaoService.mes_ano_mais_recente() or (hoje.month, hoje.year)
+
+    dados = _montar_dados_mes(mes, ano)
+    pdf_bytes = RelatorioPdfService.gerar_relatorio_mensal(dados['nome'], ano, dados)
+
+    nome_arquivo = f'relatorio-{dados["nome"].lower()}-{ano}.pdf'
+    resposta = HttpResponse(pdf_bytes, content_type='application/pdf')
+    resposta['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+    return resposta
 
 
 def cadastrar(request):
@@ -146,4 +234,10 @@ def atualizar_categoria(request, transacao_id):
 def atualizar_natureza(request, transacao_id):
     if request.method == 'POST':
         TransacaoService.atualizar_natureza(transacao_id, request.POST.get('natureza', ''))
+    return _redirecionar_de_volta(request)
+
+
+def atualizar_dividido(request, transacao_id):
+    if request.method == 'POST':
+        TransacaoService.atualizar_dividido(transacao_id, request.POST.get('dividido', ''))
     return _redirecionar_de_volta(request)
