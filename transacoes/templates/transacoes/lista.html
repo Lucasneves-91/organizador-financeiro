@@ -1,5 +1,4 @@
 {% extends "transacoes/base.html" %}
-{% load formatadores_tags %}
 
 {% block titulo %}Dashboard · Organizador Financeiro{% endblock %}
 {% block aba_transacoes %}ativa{% endblock %}
@@ -156,6 +155,12 @@
         <input type="checkbox" name="mostrar" value="receita" onchange="this.form.submit()" {% if mostrar_receita %}checked{% endif %}>
         Receitas
     </label>
+    {% for valor, rotulo in bancos_disponiveis %}
+    <label class="opcao-tipo">
+        <input type="checkbox" name="banco" value="{{ valor }}" onchange="this.form.submit()" {% if valor in bancos_atual %}checked{% endif %}>
+        {{ rotulo }}
+    </label>
+    {% endfor %}
 </form>
 
 <div class="painel secao-tabela">
@@ -168,17 +173,18 @@
                 <th>Categoria</th>
                 <th>Natureza</th>
                 <th>Banco</th>
-                <th>Parcela</th>
-                <th>Valor total</th>
-                <th>Dividido</th>
-                <th>Data da compra</th>
-                <th>Ações</th>
+                <th class="coluna-parcela">Parcela</th>
+                <th class="coluna-valor-total">V. TOTAL</th>
+                <th class="coluna-dividido">Dividido</th>
+                <th>Data</th>
+                <th class="coluna-obs">OBS</th>
+                <th class="coluna-acoes">Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for grupo in grupos_transacoes %}
             <tr class="linha-grupo-banco">
-                <td colspan="11">{{ grupo.banco }}</td>
+                <td colspan="12">{{ grupo.banco }}</td>
             </tr>
             {% for transacao in grupo.itens %}
             <tr>
@@ -188,68 +194,89 @@
                 <td>
                     <form method="post" action="{% url 'transacoes:atualizar_categoria' transacao.id %}" class="form-select-rapido">
                         {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?{{ querystring_filtros }}">
                         <select name="categoria" onchange="this.form.submit()">
                             <option value="" {% if not transacao.categoria_id %}selected{% endif %}>Sem categoria</option>
-                            {% for categoria in categorias_disponiveis %}
+                            {% if transacao.tipo == 'receita' %}
+                            {% for categoria in categorias_receita %}
                             <option value="{{ categoria.id }}" {% if categoria.id == transacao.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
                             {% endfor %}
+                            {% else %}
+                            {% for categoria in categorias_despesa %}
+                            <option value="{{ categoria.id }}" {% if categoria.id == transacao.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                            {% endfor %}
+                            {% endif %}
                         </select>
                     </form>
                 </td>
                 <td>
                     <form method="post" action="{% url 'transacoes:atualizar_natureza' transacao.id %}" class="form-select-rapido">
                         {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
-                        <select name="natureza" onchange="this.form.submit()">
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?{{ querystring_filtros }}">
+                        <select name="natureza" class="select-natureza" onchange="this.form.submit()">
                             <option value="" {% if not transacao.natureza %}selected{% endif %}>-</option>
                             <option value="fixo" {% if transacao.natureza == 'fixo' %}selected{% endif %}>Fixo</option>
                             <option value="variavel" {% if transacao.natureza == 'variavel' %}selected{% endif %}>Variável</option>
-                            <option value="investimento" {% if transacao.natureza == 'investimento' %}selected{% endif %}>Investimento</option>
+                            <option value="investimento" {% if transacao.natureza == 'investimento' %}selected{% endif %}>Invest</option>
                         </select>
                     </form>
                 </td>
                 <td>{{ transacao.get_banco_display|default:"-" }}</td>
-                <td>
+                <td class="coluna-parcela">
                     {% if transacao.parcela_atual and transacao.parcela_total %}
                         {{ transacao.parcela_atual }}/{{ transacao.parcela_total }}
                     {% else %}
                         -
                     {% endif %}
                 </td>
-                <td>{{ transacao.valor_total|default:"-" }}</td>
-                <td>
-                    <form method="post" action="{% url 'transacoes:atualizar_dividido' transacao.id %}" class="form-select-rapido">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?mes={{ mes_selecionado }}&ano={{ ano_selecionado }}">
-                        <select name="dividido" onchange="this.form.submit()">
-                            <option value="" {% if not transacao.dividido %}selected{% endif %}>-</option>
-                            {% for valor, rotulo in opcoes_dividido %}
-                            <option value="{{ valor }}" {% if valor == transacao.dividido %}selected{% endif %}>{{ rotulo }}</option>
-                            {% endfor %}
-                        </select>
-                    </form>
-                    {% if transacao.valor_dividido %}<div class="valor-dividido">{{ transacao.valor_dividido|moeda }}</div>{% endif %}
+                <td class="coluna-valor-total">{{ transacao.valor_total|default:"-" }}</td>
+                <td class="coluna-dividido">
+                    <div class="campo-dividido-wrap">
+                        <form method="post" action="{% url 'transacoes:atualizar_dividido' transacao.id %}" class="form-select-rapido">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?{{ querystring_filtros }}">
+                            <select name="dividido" class="select-dividido" onchange="this.form.submit()">
+                                <option value="" {% if not transacao.dividido %}selected{% endif %}>-</option>
+                                {% for valor, rotulo in opcoes_dividido %}
+                                <option value="{{ valor }}" {% if valor == transacao.dividido %}selected{% endif %}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        <form method="post" action="{% url 'transacoes:atualizar_valor_dividido' transacao.id %}" class="form-select-rapido">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?{{ querystring_filtros }}">
+                            <input type="number" step="0.01" name="valor_dividido" class="valor-dividido" value="{% if transacao.valor_dividido is not None %}{{ transacao.valor_dividido|stringformat:'.2f' }}{% endif %}" placeholder="-" onchange="this.form.submit()">
+                        </form>
+                    </div>
                 </td>
                 <td>{{ transacao.data|date:"d/m/y" }}</td>
+                <td class="coluna-obs">
+                    <form method="post" action="{% url 'transacoes:atualizar_observacao' transacao.id %}" class="form-select-rapido">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'transacoes:lista' %}?{{ querystring_filtros }}">
+                        <input type="text" name="observacao" value="{{ transacao.observacao }}" placeholder="Adicionar observação" onchange="this.form.submit()">
+                    </form>
+                </td>
                 <td class="acoes">
-                    <a href="{% url 'transacoes:editar' transacao.id %}">Editar</a>
-                    <a href="{% url 'transacoes:excluir' transacao.id %}">Excluir</a>
+                    <a href="{% url 'transacoes:editar' transacao.id %}">Edit</a>
+                    <a href="{% url 'transacoes:excluir' transacao.id %}">Exc</a>
                 </td>
             </tr>
             {% endfor %}
             {% empty %}
             <tr>
-                <td colspan="11" class="vazio">Nenhuma transação nesse período.</td>
+                <td colspan="12" class="vazio">Nenhuma transação nesse período.</td>
             </tr>
             {% endfor %}
         </tbody>
         {% if grupos_transacoes %}
         <tfoot>
             <tr class="linha-total-dividido">
-                <td colspan="8">Total dividido</td>
+                <td>Total</td>
+                <td>{{ soma_valor }}</td>
+                <td colspan="6"></td>
                 <td>{{ soma_dividido }}</td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>
         </tfoot>
         {% endif %}

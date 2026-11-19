@@ -19,12 +19,34 @@ class TransacaoService:
         return queryset
 
     @staticmethod
-    def listar(mes=None, ano=None, tipos=None):
+    def listar(mes=None, ano=None, tipos=None, bancos=None):
         queryset = Transacao.objects.select_related('categoria').all()
         queryset = TransacaoService._filtrar_por_periodo(queryset, mes, ano)
         if tipos:
             queryset = queryset.filter(tipo__in=tipos)
+        if bancos:
+            valores = set(bancos)
+            if Transacao.Banco.MANUAL in valores:
+                # Lançamento manual não grava 'manual' no banco, fica em branco.
+                valores.add('')
+            queryset = queryset.filter(banco__in=valores)
         return queryset
+
+    @staticmethod
+    def bancos_disponiveis(mes=None, ano=None) -> list:
+        """Bancos com lançamento no período — não é uma lista fixa: some um banco que
+        não aparece mais e surge um novo assim que uma fatura dele é importada."""
+        rotulos = dict(Transacao.Banco.choices)
+        ordem_bancos = [valor for valor, _ in Transacao.Banco.choices]
+
+        base = TransacaoService._filtrar_por_periodo(Transacao.objects.all(), mes, ano)
+        valores_existentes = set(base.exclude(banco='').values_list('banco', flat=True).distinct())
+        if base.filter(banco='').exists():
+            valores_existentes.add(Transacao.Banco.MANUAL)
+
+        ordenados = [valor for valor in ordem_bancos if valor in valores_existentes]
+        extras = sorted(valores_existentes - set(ordem_bancos))
+        return [(valor, rotulos.get(valor, valor.capitalize())) for valor in ordenados + extras]
 
     @staticmethod
     def agrupar_por_banco(transacoes) -> list:
@@ -63,6 +85,10 @@ class TransacaoService:
             (transacao.valor_dividido for transacao in transacoes if transacao.valor_dividido is not None),
             Decimal('0'),
         )
+
+    @staticmethod
+    def soma_valor(transacoes) -> Decimal:
+        return sum((transacao.valor for transacao in transacoes), Decimal('0'))
 
     @staticmethod
     def obter_totais(mes=None, ano=None) -> dict:
@@ -228,8 +254,28 @@ class TransacaoService:
 
     @staticmethod
     def atualizar_dividido(transacao_id: int, dividido: str) -> Transacao:
-        """Ajuste rápido só da divisão, direto na listagem (sem abrir o form inteiro)."""
+        """Ajuste rápido só da divisão, direto na listagem (sem abrir o form inteiro).
+        Preenche o valor dividido com a sugestão (metade/40%), mas quem usa pode
+        sobrescrever esse valor depois (ver `atualizar_valor_dividido`)."""
         transacao = TransacaoService.buscar(transacao_id)
         transacao.dividido = dividido
-        transacao.save(update_fields=['dividido'])
+        transacao.valor_dividido = transacao.sugerir_valor_dividido()
+        transacao.save(update_fields=['dividido', 'valor_dividido'])
+        return transacao
+
+    @staticmethod
+    def atualizar_valor_dividido(transacao_id: int, valor_dividido) -> Transacao:
+        """Ajuste rápido só do valor dividido, direto na listagem — sobrescreve a
+        sugestão automática (metade/40%) com o valor digitado."""
+        transacao = TransacaoService.buscar(transacao_id)
+        transacao.valor_dividido = valor_dividido
+        transacao.save(update_fields=['valor_dividido'])
+        return transacao
+
+    @staticmethod
+    def atualizar_observacao(transacao_id: int, observacao: str) -> Transacao:
+        """Ajuste rápido só da observação, direto na listagem (sem abrir o form inteiro)."""
+        transacao = TransacaoService.buscar(transacao_id)
+        transacao.observacao = observacao
+        transacao.save(update_fields=['observacao'])
         return transacao

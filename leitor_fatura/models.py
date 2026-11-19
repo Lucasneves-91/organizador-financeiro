@@ -10,7 +10,7 @@ class ImportacaoLote(models.Model):
         CANCELADO = 'cancelado', 'Cancelado'
 
     arquivo_nome = models.CharField(max_length=255)
-    banco = models.CharField(max_length=10, choices=Transacao.Banco.choices)
+    banco = models.CharField(max_length=20, choices=Transacao.Banco.choices)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDENTE)
     criado_em = models.DateTimeField(auto_now_add=True)
 

@@ -18,6 +18,7 @@
             </form>
         </div>
         <div class="botoes-topo">
+            <a href="{% url 'transacoes:relatorio_anual_pdf' %}?ano={{ ano_selecionado }}" class="botao botao-secundario">Relatório PDF</a>
             <a href="{% url 'transacoes:lista' %}" class="botao botao-secundario">Voltar</a>
         </div>
     </div>

@@ -383,7 +383,7 @@ tbody tr:hover {
     color: var(--texto-mutado);
     text-decoration: none;
     font-size: 0.84rem;
-    margin-right: 12px;
+    margin-right: 8px;
 }
 
 .acoes a:hover {
@@ -413,6 +413,7 @@ tbody tr:hover {
     padding: 9px 10px;
     font-size: 0.84rem;
     white-space: nowrap;
+    text-align: center;
 }
 
 .secao-tabela td:first-child,
@@ -667,6 +668,63 @@ tbody tr:hover {
     color: var(--texto);
 }
 
+.secao-tabela select.select-natureza {
+    max-width: 85px;
+}
+
+/* O select nativo (com a seta embutida) e o input numérico renderizam de forma
+   diferente entre navegadores mesmo com a mesma largura declarada — por isso os
+   dois ficam dentro de um wrapper com largura fixa e preenchem 100% dele, em vez
+   de cada um tentar acertar o próprio tamanho. */
+.campo-dividido-wrap {
+    width: 85px;
+    margin: 0 auto;
+}
+
+.secao-tabela select.select-dividido {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.secao-tabela input[type="text"] {
+    padding: 6px 8px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: var(--superficie);
+    color: var(--texto);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Coluna OBS: precisa de largura própria pra não ficar espremida contra a
+   coluna "Ações" (que é sticky) e pra caber o campo de edição inline. */
+.secao-tabela th.coluna-obs,
+.secao-tabela td.coluna-obs {
+    min-width: 260px;
+    white-space: normal;
+    text-align: center;
+}
+
+/* Coluna "Ações" enxuta (só "Edit"/"Exc") pra sobrar espaço pra OBS. */
+.secao-tabela th.coluna-acoes,
+.secao-tabela td.acoes {
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.secao-tabela th.coluna-parcela,
+.secao-tabela td.coluna-parcela,
+.secao-tabela th.coluna-valor-total,
+.secao-tabela td.coluna-valor-total,
+.secao-tabela th.coluna-dividido,
+.secao-tabela td.coluna-dividido {
+    padding-left: 6px;
+    padding-right: 6px;
+    white-space: nowrap;
+}
+
 .form-select-rapido {
     margin: 0;
 }
@@ -717,11 +775,18 @@ tbody tr:hover {
 
 /* Coluna "Dividido" + total no rodapé da tabela de transações */
 
-.valor-dividido {
+input.valor-dividido {
     margin-top: 4px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--texto-secundario);
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--texto);
+    background: var(--superficie);
+    text-align: center;
 }
 
 .linha-total-dividido td {

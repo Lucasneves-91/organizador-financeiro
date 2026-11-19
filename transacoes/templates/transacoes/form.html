@@ -23,4 +23,33 @@
 </div>
 
 <a href="{% url 'transacoes:lista' %}" class="voltar">&larr; Voltar para a lista</a>
+
+<script>
+    (function () {
+        var campoTipo = document.getElementById('id_tipo');
+        var campoCategoria = document.getElementById('id_categoria');
+        if (!campoTipo || !campoCategoria) return;
+
+        function filtrarCategorias() {
+            var tipoAtual = campoTipo.value;
+            var selecaoAindaValida = false;
+
+            Array.prototype.forEach.call(campoCategoria.options, function (opcao) {
+                var tipoCategoria = opcao.getAttribute('data-tipo');
+                var visivel = !tipoCategoria || tipoCategoria === tipoAtual || tipoCategoria === 'ambos';
+                opcao.hidden = !visivel;
+                if (opcao.selected && visivel) {
+                    selecaoAindaValida = true;
+                }
+            });
+
+            if (!selecaoAindaValida) {
+                campoCategoria.value = '';
+            }
+        }
+
+        campoTipo.addEventListener('change', filtrarCategorias);
+        filtrarCategorias();
+    })();
+</script>
 {% endblock %}

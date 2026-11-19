@@ -26,5 +26,23 @@
         {% endif %}
         {% block conteudo %}{% endblock %}
     </div>
+    <script>
+        // Os selects de ajuste rápido (categoria/natureza/dividido/filtros) recarregam
+        // a página inteira via submit — sem isso o navegador sempre volta o scroll pro
+        // topo. Guarda a posição antes de sair e restaura assim que a página carregar.
+        (function () {
+            var chave = 'scrollY:' + window.location.pathname;
+
+            window.addEventListener('beforeunload', function () {
+                sessionStorage.setItem(chave, window.scrollY);
+            });
+
+            var posicaoSalva = sessionStorage.getItem(chave);
+            if (posicaoSalva !== null) {
+                sessionStorage.removeItem(chave);
+                window.scrollTo(0, parseInt(posicaoSalva, 10));
+            }
+        })();
+    </script>
 </body>
 </html>

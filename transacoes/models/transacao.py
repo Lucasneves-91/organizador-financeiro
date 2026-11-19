@@ -12,6 +12,8 @@ class Transacao(models.Model):
         NUBANK = 'nubank', 'Nubank'
         C6 = 'c6', 'C6 Bank'
         XP = 'xp', 'XP'
+        PIX = 'pix', 'PIX'
+        CARTAO_PRINCESA = 'cartao_princesa', 'Cartao Princesa'
         MANUAL = 'manual', 'Lançamento manual'
 
     class Natureza(models.TextChoices):
@@ -20,7 +22,7 @@ class Transacao(models.Model):
         INVESTIMENTO = 'investimento', 'Investimento'
 
     class Dividido(models.TextChoices):
-        METADE = 'metade', 'Metade (50%)'
+        METADE = 'metade', '50%'
         QUARENTA = 'quarenta', '40%'
 
     descricao = models.CharField(max_length=255)
@@ -37,12 +39,16 @@ class Transacao(models.Model):
     mes_referencia = models.PositiveSmallIntegerField()
     ano_referencia = models.PositiveSmallIntegerField()
 
-    banco = models.CharField(max_length=10, choices=Banco.choices, blank=True)
+    banco = models.CharField(max_length=20, choices=Banco.choices, blank=True)
     natureza = models.CharField(max_length=15, choices=Natureza.choices, blank=True)
     parcela_atual = models.PositiveSmallIntegerField(null=True, blank=True)
     parcela_total = models.PositiveSmallIntegerField(null=True, blank=True)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     dividido = models.CharField(max_length=10, choices=Dividido.choices, blank=True)
+    # Começa com um valor sugerido conforme `dividido` (metade/40%), mas pode ser
+    # sobrescrito à mão — por isso é campo, não só uma conta em cima de `valor`.
+    valor_dividido = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    observacao = models.TextField(blank=True, verbose_name='observação')
 
     # Preenchido apenas em lançamentos vindos de importação de fatura (leitor_fatura),
     # usado para não importar o mesmo lançamento duas vezes.
@@ -55,8 +61,7 @@ class Transacao(models.Model):
     def __str__(self):
         return f'{self.descricao} ({self.tipo})'
 
-    @property
-    def valor_dividido(self):
+    def sugerir_valor_dividido(self):
         if self.dividido == self.Dividido.METADE:
             return self.valor / 2
         if self.dividido == self.Dividido.QUARENTA:

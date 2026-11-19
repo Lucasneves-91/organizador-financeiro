@@ -38,7 +38,7 @@
                 {% for item in lancamentos %}
                 <tr class="{% if item.duplicado %}linha-duplicada{% endif %}">
                     <td>
-                        <input type="checkbox" name="selecionado" value="{{ item.id }}" {% if item.selecionado %}checked{% endif %}>
+                        <input type="checkbox" name="selecionado" value="{{ item.id }}" data-valor="{{ item.valor|stringformat:'.2f' }}" {% if item.selecionado %}checked{% endif %}>
                     </td>
                     <td>{{ item.data|date:"d/m/y" }}</td>
                     <td>
@@ -75,6 +75,15 @@
                 </tr>
                 {% endfor %}
             </tbody>
+            {% if lancamentos %}
+            <tfoot>
+                <tr class="linha-total-dividido">
+                    <td colspan="3">Total selecionado</td>
+                    <td id="total-selecionado">R$ 0,00</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+            {% endif %}
         </table>
     </div>
 
@@ -82,6 +91,29 @@
         <button type="submit" class="botao">Confirmar importação</button>
     </div>
 </form>
+
+<script>
+    (function () {
+        var checkboxes = document.querySelectorAll('input[name="selecionado"]');
+        var totalEl = document.getElementById('total-selecionado');
+        if (!totalEl) return;
+
+        function atualizarTotal() {
+            var total = 0;
+            checkboxes.forEach(function (checkbox) {
+                if (checkbox.checked) {
+                    total += parseFloat(checkbox.dataset.valor) || 0;
+                }
+            });
+            totalEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        checkboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', atualizarTotal);
+        });
+        atualizarTotal();
+    })();
+</script>
 
 <form method="post" action="{% url 'leitor_fatura:cancelar' lote.id %}" style="display: inline;">
     {% csrf_token %}

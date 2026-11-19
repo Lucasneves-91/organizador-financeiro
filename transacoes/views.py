@@ -1,4 +1,6 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
@@ -42,7 +44,14 @@ def lista(request):
     mostrar_receita = 'receita' in mostrar_atual
     mostrar_despesa = 'despesa' in mostrar_atual
 
-    transacoes = TransacaoService.listar(mes=mes, ano=ano, tipos=mostrar_atual)
+    # Filtro por banco: opções vêm do que já foi importado nesse período (não é uma
+    # lista fixa). Por padrão mostra todos. Afeta só a lista de lançamentos.
+    bancos_disponiveis = TransacaoService.bancos_disponiveis(mes=mes, ano=ano)
+    bancos_validos = [valor for valor, _ in bancos_disponiveis]
+    banco_param = request.GET.getlist('banco')
+    bancos_atual = [v for v in banco_param if v in bancos_validos] or bancos_validos
+
+    transacoes = TransacaoService.listar(mes=mes, ano=ano, tipos=mostrar_atual, bancos=bancos_atual)
     grupos_transacoes = TransacaoService.agrupar_por_banco(transacoes)
     totais = TransacaoService.obter_totais(mes=mes, ano=ano)
     despesas_por_categoria = TransacaoService.obter_despesas_por_categoria(mes=mes, ano=ano)
@@ -57,6 +66,15 @@ def lista(request):
         linha['total_formatado'] = formatar_valor_monetario(linha['total'])
 
     anos_disponiveis = sorted(set(TransacaoService.anos_disponiveis()) | {ano}, reverse=True)
+
+    # Querystring com os filtros atuais (mês/ano/mostrar/banco), usada no "next" dos
+    # ajustes rápidos de categoria/natureza/dividido — sem isso, voltar pra lista
+    # perdia o filtro de banco e de mostrar (voltava sempre pra "todos").
+    querystring_filtros = urlencode(
+        [('mes', mes), ('ano', ano)]
+        + [('mostrar', valor) for valor in mostrar_atual]
+        + [('banco', valor) for valor in bancos_atual]
+    )
 
     # Gráfico Receitas x Despesas x Saldo em CSS puro (barras com altura proporcional
     # ao maior valor dos três) — sem depender de biblioteca externa.
@@ -91,11 +109,16 @@ def lista(request):
         'grafico_pct_receitas': pct_css(grafico_pct_receitas),
         'grafico_pct_despesas': pct_css(grafico_pct_despesas),
         'grafico_pct_saldo': pct_css(grafico_pct_saldo),
-        'categorias_disponiveis': Categoria.objects.filter(ativo=True),
+        'categorias_despesa': Categoria.objects.filter(ativo=True, tipo__in=[Categoria.Tipo.DESPESA, Categoria.Tipo.AMBOS]),
+        'categorias_receita': Categoria.objects.filter(ativo=True, tipo__in=[Categoria.Tipo.RECEITA, Categoria.Tipo.AMBOS]),
         'mostrar_atual': mostrar_atual,
         'mostrar_receita': mostrar_receita,
         'mostrar_despesa': mostrar_despesa,
+        'bancos_disponiveis': bancos_disponiveis,
+        'bancos_atual': bancos_atual,
+        'querystring_filtros': querystring_filtros,
         'opcoes_dividido': Transacao.Dividido.choices,
+        'soma_valor': formatar_valor_monetario(TransacaoService.soma_valor(transacoes)),
         'soma_dividido': formatar_valor_monetario(TransacaoService.soma_dividido(transacoes)),
     }
     return render(request, 'transacoes/lista.html', contexto)
@@ -118,6 +141,12 @@ def _montar_dados_mes(numero_mes: int, ano: int) -> dict:
     pct_variavel = _percentual(natureza['variavel'], receitas)
     pct_investimento = _percentual(natureza['investimento'], receitas)
 
+    # Valor ideal = o limite (%) aplicado em cima da receita do mês — mesma base
+    # usada pro cálculo do percentual atual, pra dar pra comparar valor com valor.
+    valor_ideal_fixo = receitas * LIMITE_IDEAL_FIXO / 100
+    valor_ideal_variavel = receitas * LIMITE_IDEAL_VARIAVEL / 100
+    valor_ideal_investimento = receitas * LIMITE_IDEAL_INVESTIMENTO / 100
+
     return {
         'nome': NOMES_MESES[numero_mes - 1],
         'tem_dados': bool(receitas or totais['total_despesas']),
@@ -136,6 +165,9 @@ def _montar_dados_mes(numero_mes: int, ano: int) -> dict:
         'limite_ideal_fixo': LIMITE_IDEAL_FIXO,
         'limite_ideal_variavel': LIMITE_IDEAL_VARIAVEL,
         'limite_ideal_investimento': LIMITE_IDEAL_INVESTIMENTO,
+        'valor_ideal_fixo': formatar_valor_monetario(valor_ideal_fixo),
+        'valor_ideal_variavel': formatar_valor_monetario(valor_ideal_variavel),
+        'valor_ideal_investimento': formatar_valor_monetario(valor_ideal_investimento),
     }
 
 
@@ -175,7 +207,27 @@ def relatorio_mensal_pdf(request):
 
     nome_arquivo = f'relatorio-{dados["nome"].lower()}-{ano}.pdf'
     resposta = HttpResponse(pdf_bytes, content_type='application/pdf')
-    resposta['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+    # "inline" (em vez de "attachment"): abre direto no visualizador de PDF do
+    # navegador, que já tem seu próprio botão de download — sem isso, o clique
+    # baixava o arquivo na hora em vez de deixar ver online primeiro.
+    resposta['Content-Disposition'] = f'inline; filename="{nome_arquivo}"'
+    return resposta
+
+
+def relatorio_anual_pdf(request):
+    ano_param = request.GET.get('ano')
+    if ano_param:
+        ano = int(ano_param)
+    else:
+        recente = TransacaoService.mes_ano_mais_recente()
+        ano = recente[1] if recente else date.today().year
+
+    meses_dados = [_montar_dados_mes(numero, ano) for numero in range(1, 13)]
+    pdf_bytes = RelatorioPdfService.gerar_relatorio_anual(ano, meses_dados)
+
+    nome_arquivo = f'relatorio-anual-{ano}.pdf'
+    resposta = HttpResponse(pdf_bytes, content_type='application/pdf')
+    resposta['Content-Disposition'] = f'inline; filename="{nome_arquivo}"'
     return resposta
 
 
@@ -240,4 +292,21 @@ def atualizar_natureza(request, transacao_id):
 def atualizar_dividido(request, transacao_id):
     if request.method == 'POST':
         TransacaoService.atualizar_dividido(transacao_id, request.POST.get('dividido', ''))
+    return _redirecionar_de_volta(request)
+
+
+def atualizar_valor_dividido(request, transacao_id):
+    if request.method == 'POST':
+        bruto = request.POST.get('valor_dividido', '').strip()
+        try:
+            valor_dividido = Decimal(bruto) if bruto else None
+        except InvalidOperation:
+            valor_dividido = None
+        TransacaoService.atualizar_valor_dividido(transacao_id, valor_dividido)
+    return _redirecionar_de_volta(request)
+
+
+def atualizar_observacao(request, transacao_id):
+    if request.method == 'POST':
+        TransacaoService.atualizar_observacao(transacao_id, request.POST.get('observacao', ''))
     return _redirecionar_de_volta(request)
