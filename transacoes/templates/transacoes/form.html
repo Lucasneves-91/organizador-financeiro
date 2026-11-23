@@ -51,5 +51,58 @@
         campoTipo.addEventListener('change', filtrarCategorias);
         filtrarCategorias();
     })();
+
+    // Tipo Investimento: mostra só Descrição, Valor, Tipo, Data, Natureza e Banco,
+    // a Natureza vira "Investimento" e o Banco fica restrito aos bancos de investimento.
+    (function () {
+        var campoTipo = document.getElementById('id_tipo');
+        var campoBanco = document.getElementById('id_banco');
+        var campoNatureza = document.getElementById('id_natureza');
+        if (!campoTipo || !campoBanco) return;
+
+        var camposOcultos = {{ campos_fora_do_investimento|safe }};
+        var bancosInvestimento = campoBanco.dataset.bancosInvestimento.split(',');
+        var bancosSoInvestimento = campoBanco.dataset.bancosSoInvestimento.split(',');
+
+        function linhaDoCampo(nome) {
+            var campo = document.getElementById('id_' + nome);
+            return campo ? campo.closest('tr') : null;
+        }
+
+        function aplicarTipo() {
+            var investimento = campoTipo.value === 'investimento';
+
+            camposOcultos.forEach(function (nome) {
+                var linha = linhaDoCampo(nome);
+                if (linha) linha.hidden = investimento;
+            });
+
+            var selecaoValida = false;
+            Array.prototype.forEach.call(campoBanco.options, function (opcao) {
+                var visivel = investimento
+                    ? bancosInvestimento.indexOf(opcao.value) !== -1
+                    : bancosSoInvestimento.indexOf(opcao.value) === -1;
+                opcao.hidden = !visivel;
+                if (opcao.selected && visivel) selecaoValida = true;
+            });
+            if (!selecaoValida) campoBanco.value = investimento ? bancosInvestimento[0] : '';
+
+            // Natureza: investimento é sempre "Investimento" (o servidor também garante isso).
+            if (campoNatureza) {
+                if (investimento) {
+                    campoNatureza.value = 'investimento';
+                } else if (campoNatureza.disabled && campoNatureza.value === 'investimento') {
+                    campoNatureza.value = '';
+                }
+                campoNatureza.disabled = investimento;
+            }
+
+            var ajudaBanco = linhaDoCampo('banco') && linhaDoCampo('banco').querySelector('.helptext');
+            if (ajudaBanco) ajudaBanco.hidden = investimento;
+        }
+
+        campoTipo.addEventListener('change', aplicarTipo);
+        aplicarTipo();
+    })();
 </script>
 {% endblock %}

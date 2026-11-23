@@ -35,7 +35,7 @@ class LancamentoImportado(models.Model):
     data = models.DateField()
     descricao = models.CharField(max_length=255)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
-    tipo = models.CharField(max_length=10, choices=Transacao.Tipo.choices)
+    tipo = models.CharField(max_length=15, choices=Transacao.Tipo.choices)
     parcela_atual = models.PositiveSmallIntegerField(null=True, blank=True)
     parcela_total = models.PositiveSmallIntegerField(null=True, blank=True)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

@@ -22,8 +22,7 @@ ESTILO_BASE_TABELA = [
 class RelatorioPdfService:
     @staticmethod
     def gerar_relatorio_mensal(nome_mes: str, ano: int, dados: dict) -> bytes:
-        """Gera o PDF do comparativo de um único mês (Receitas/Despesas/Saldo,
-        Gastos por natureza e o cenário ideal) — mesmas métricas da página Anual."""
+        """PDF com as métricas de um mês."""
         buffer = io.BytesIO()
         documento = SimpleDocTemplate(
             buffer, pagesize=A4,
@@ -108,8 +107,7 @@ class RelatorioPdfService:
 
     @staticmethod
     def gerar_relatorio_anual(ano: int, meses_dados: list) -> bytes:
-        """Gera o PDF do comparativo anual (mesma grade de meses x métricas da
-        página Anual): Receitas/Despesas/Saldo, Gastos por natureza e % cenário ideal."""
+        """PDF com a mesma grade da página Anual."""
         buffer = io.BytesIO()
         documento = SimpleDocTemplate(
             buffer, pagesize=landscape(A4),

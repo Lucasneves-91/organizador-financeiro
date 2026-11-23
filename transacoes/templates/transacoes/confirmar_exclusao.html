@@ -13,6 +13,13 @@
 
     <form method="post">
         {% csrf_token %}
+        {% if proximas %}
+        <fieldset class="escopo-parcelas">
+            <legend>Esta é a parcela {{ transacao.parcela_atual }}/{{ transacao.parcela_total }}. Excluir:</legend>
+            <label><input type="radio" name="escopo" value="esta" checked> Só esta parcela</label>
+            <label><input type="radio" name="escopo" value="proximas"> Esta e as próximas {{ proximas }} parcela(s)</label>
+        </fieldset>
+        {% endif %}
         <button type="submit" class="botao botao-perigo">Confirmar exclusão</button>
         <a href="{% url 'transacoes:lista' %}" class="botao botao-secundario">Cancelar</a>
     </form>

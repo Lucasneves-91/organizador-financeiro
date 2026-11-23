@@ -1,0 +1,146 @@
+{% extends "transacoes/base.html" %}
+
+{% block titulo %}Meta de economia · Organizador Financeiro{% endblock %}
+{% block aba_transacoes %}ativa{% endblock %}
+
+{% block conteudo %}
+<div class="topo topo-dashboard">
+    <h1 class="titulo-dashboard">Meta de economia</h1>
+    <div class="topo-acoes">
+        <div class="filtro-periodo-wrap">
+            <span class="rotulo">Ano:</span>
+            <form method="get" class="filtro-periodo">
+                <select name="ano" onchange="this.form.submit()">
+                    {% for ano in anos_disponiveis %}
+                    <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="botoes-topo">
+            <a href="{% url 'transacoes:anual' %}?ano={{ ano_selecionado }}" class="botao botao-secundario">Anual</a>
+            <a href="{% url 'transacoes:lista' %}" class="botao botao-secundario">Voltar</a>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {% if form_mensal.errors or form_anual.errors %}
+    <div class="erros">Corrija os campos marcados em vermelho.</div>
+    {% endif %}
+
+    <div class="painel painel-meta">
+        <div class="meta-anual-grid">
+            <div class="meta-anual-form">
+                <h2 class="titulo-bloco-meta">Meta anual</h2>
+                <p class="meta-resumo">
+                    {% if meta_anual.tem_anual %}Guardar <strong>{{ meta_anual.descricao_anual }}</strong>.{% else %}Nenhuma meta anual definida para {{ ano_selecionado }}.{% endif %}
+                </p>
+                <div class="form-meta">
+                    <label><span class="rotulo">{{ form_anual.tipo_anual.label }}</span>{{ form_anual.tipo_anual }}</label>
+                    <label><span class="rotulo">{{ form_anual.valor_anual.label }}</span>{{ form_anual.valor_anual }}</label>
+                </div>
+                {% if form_anual.valor_anual.errors %}<div class="erros">{{ form_anual.valor_anual.errors|join:" " }}</div>{% endif %}
+            </div>
+
+            <div class="quadro-guardado">
+                {% if anual %}
+                <span class="rotulo">Guardado no ano</span>
+                <div class="quadro-guardado-valor">{{ anual.guardado }} <span>de {{ anual.meta }}</span></div>
+                <div class="barra-guardado" role="progressbar" aria-valuenow="{{ anual.largura_barra }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="barra-guardado-fill" style="width: {{ anual.largura_barra }}%"></div>
+                </div>
+                <div class="quadro-guardado-rodape">
+                    <strong class="quadro-percentual">{{ anual.percentual }}%</strong>
+                    · {% if anual.atingiu %}Meta anual atingida ({{ anual.diferenca }}){% else %}Faltam {{ anual.falta }}{% endif %}
+                </div>
+                {% else %}
+                <div class="quadro-guardado-vazio">Defina uma meta anual para acompanhar o quanto já foi guardado.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="painel secao-tabela secao-anual secao-meta">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for mes in meses %}
+                    <th><span class="mes-longo">{{ mes.nome }}</span><span class="mes-curto">{{ mes.nome|slice:":3" }}</span></th>
+                    {% endfor %}
+                    <th class="col-total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="linha-definir-meta">
+                    <td class="rotulo-linha">Meta do mês<br><small>R$ ou % da receita</small></td>
+                    {% for mes in meses %}
+                    <td class="{% if mes.campo_valor.errors %}campo-com-erro{% endif %}" {% if mes.campo_valor.errors %}title="{{ mes.campo_valor.errors|join:' ' }}"{% endif %}>
+                        <div class="campo-meta-mes">
+                            {{ mes.campo_tipo }}
+                            {{ mes.campo_valor }}
+                        </div>
+                    </td>
+                    {% endfor %}
+                    <td class="col-total"></td>
+                </tr>
+                <tr>
+                    <td class="rotulo-linha">Receitas</td>
+                    {% for mes in meses %}
+                    <td class="col-receitas">{% if mes.tem_dados %}{{ mes.receitas }}{% else %}-{% endif %}</td>
+                    {% endfor %}
+                    <td class="col-total col-receitas">{% if total.tem_dados %}{{ total.receitas }}{% else %}-{% endif %}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo-linha">Deveria guardar</td>
+                    {% for mes in meses %}
+                    <td>{{ mes.meta|default:"-" }}</td>
+                    {% endfor %}
+                    <td class="col-total">{{ total.meta|default:"-" }}</td>
+                </tr>
+                <tr class="linha-saldo">
+                    <td class="rotulo-linha">Guardado<br><small>(investimentos)</small></td>
+                    {% for mes in meses %}
+                    <td class="{% if mes.meta %}{% if mes.atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{% if mes.tem_dados %}{{ mes.guardado }}{% else %}-{% endif %}</td>
+                    {% endfor %}
+                    <td class="col-total {% if total.meta %}{% if total.atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{% if total.tem_dados %}{{ total.guardado }}{% else %}-{% endif %}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo-linha">Diferença</td>
+                    {% for mes in meses %}
+                    <td class="{% if mes.meta %}{% if mes.atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{{ mes.diferenca|default:"-" }}</td>
+                    {% endfor %}
+                    <td class="col-total {% if total.meta %}{% if total.atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{{ total.diferenca|default:"-" }}</td>
+                </tr>
+            </tbody>
+            <tbody class="secao-espacada">
+                <tr class="linha-cenario-titulo">
+                    <td colspan="14">Acumulado no ano</td>
+                </tr>
+                <tr>
+                    <td class="rotulo-linha">Meta acumulada</td>
+                    {% for mes in meses %}
+                    <td>{{ mes.acumulado_meta|default:"-" }}</td>
+                    {% endfor %}
+                    <td class="col-total">{{ total.meta|default:"-" }}</td>
+                </tr>
+                <tr class="linha-saldo">
+                    <td class="rotulo-linha">Guardado acumulado</td>
+                    {% for mes in meses %}
+                    <td class="{% if mes.acumulado_meta %}{% if mes.acumulado_atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{{ mes.acumulado_guardado|default:"-" }}</td>
+                    {% endfor %}
+                    <td class="col-total {% if total.meta %}{% if total.atingiu %}positivo{% else %}negativo{% endif %}{% endif %}">{% if total.tem_dados %}{{ total.guardado }}{% else %}-{% endif %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="acoes-meta">
+        <button type="submit" class="botao">Salvar metas</button>
+        <span class="dica-meta">Deixe o valor em branco para não ter meta naquele mês (ou no ano).</span>
+    </div>
+</form>
+
+{% endblock %}

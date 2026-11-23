@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block titulo %}Organizador Financeiro{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'transacoes/style.css' %}">
+    <link rel="stylesheet" href="{% static 'transacoes/style.css' %}?v={{ versao_css }}">
 </head>
 <body>
     <nav class="navbar">
@@ -27,9 +27,7 @@
         {% block conteudo %}{% endblock %}
     </div>
     <script>
-        // Os selects de ajuste rápido (categoria/natureza/dividido/filtros) recarregam
-        // a página inteira via submit — sem isso o navegador sempre volta o scroll pro
-        // topo. Guarda a posição antes de sair e restaura assim que a página carregar.
+        // Mantém a posição do scroll quando um ajuste rápido recarrega a página.
         (function () {
             var chave = 'scrollY:' + window.location.pathname;
 

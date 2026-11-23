@@ -379,6 +379,11 @@ tbody tr:hover {
     color: #942929;
 }
 
+.tag.investimento {
+    background: var(--primaria-clara);
+    color: #1c5cab;
+}
+
 .acoes a {
     color: var(--texto-mutado);
     text-decoration: none;
@@ -399,8 +404,7 @@ tbody tr:hover {
 
 .secao-tabela {
     margin-top: 20px;
-    /* Tabela com muitas colunas (transações, preview de importação): em telas
-       estreitas ela rola na horizontal em vez de ficar cortada/escondida. */
+    /* Tabelas largas rolam na horizontal em telas estreitas. */
     overflow-x: auto;
 }
 
@@ -458,6 +462,12 @@ tbody tr:hover {
     border-radius: 8px;
     font-size: 0.94rem;
     font-family: inherit;
+}
+
+.cartao-formulario select:disabled {
+    background: var(--pagina);
+    color: var(--texto-secundario);
+    cursor: not-allowed;
 }
 
 .cartao-formulario input:focus,
@@ -672,10 +682,7 @@ tbody tr:hover {
     max-width: 85px;
 }
 
-/* O select nativo (com a seta embutida) e o input numérico renderizam de forma
-   diferente entre navegadores mesmo com a mesma largura declarada — por isso os
-   dois ficam dentro de um wrapper com largura fixa e preenchem 100% dele, em vez
-   de cada um tentar acertar o próprio tamanho. */
+/* Wrapper de largura fixa: select e input têm tamanhos diferentes por navegador. */
 .campo-dividido-wrap {
     width: 85px;
     margin: 0 auto;
@@ -698,8 +705,7 @@ tbody tr:hover {
     box-sizing: border-box;
 }
 
-/* Coluna OBS: precisa de largura própria pra não ficar espremida contra a
-   coluna "Ações" (que é sticky) e pra caber o campo de edição inline. */
+/* Coluna OBS com largura mínima para caber o campo de edição. */
 .secao-tabela th.coluna-obs,
 .secao-tabela td.coluna-obs {
     min-width: 260px;
@@ -707,7 +713,6 @@ tbody tr:hover {
     text-align: center;
 }
 
-/* Coluna "Ações" enxuta (só "Edit"/"Exc") pra sobrar espaço pra OBS. */
 .secao-tabela th.coluna-acoes,
 .secao-tabela td.acoes {
     min-width: 0;
@@ -845,4 +850,272 @@ input.valor-dividido {
     font-size: 0.8rem;
     padding-top: 16px;
     padding-bottom: 16px;
+}
+
+/* Meta de economia */
+
+.painel-meta {
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.meta-anual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: stretch;
+}
+
+@media (max-width: 760px) {
+    .meta-anual-grid { grid-template-columns: 1fr; }
+}
+
+.meta-anual-form,
+.quadro-guardado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.titulo-bloco-meta {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.meta-resumo {
+    margin: 0;
+    color: var(--texto-secundario);
+}
+
+.form-meta {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.form-meta label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.form-meta .rotulo {
+    margin: 0;
+}
+
+.form-meta select,
+.form-meta input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    font-size: 0.94rem;
+    font-family: inherit;
+    background: var(--superficie);
+    color: var(--texto);
+    box-sizing: border-box;
+}
+
+.form-meta input {
+    width: 160px;
+}
+
+.painel-meta .erros {
+    margin: 0;
+}
+
+/* Quadro com o guardado no ano e a barra que enche de verde */
+
+.quadro-guardado {
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 18px 24px;
+    background: var(--pagina);
+}
+
+.quadro-guardado .rotulo {
+    margin: 0;
+}
+
+.quadro-guardado-valor {
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.quadro-guardado-valor span {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--texto-secundario);
+}
+
+.barra-guardado {
+    width: 100%;
+    height: 22px;
+    background: var(--borda);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.barra-guardado-fill {
+    height: 100%;
+    background: var(--bom);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.quadro-guardado-rodape {
+    font-size: 0.9rem;
+    color: var(--texto-secundario);
+}
+
+.quadro-percentual {
+    color: var(--bom);
+}
+
+.quadro-guardado-vazio {
+    color: var(--texto-mutado);
+    font-size: 0.9rem;
+}
+
+/* Tabela da meta: largura fixa para caber os 12 meses sem rolagem */
+
+.secao-meta {
+    overflow-x: visible;
+}
+
+.secao-meta table {
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.secao-meta th,
+.secao-meta td {
+    padding: 8px 4px;
+    font-size: 0.78rem;
+    white-space: normal;
+}
+
+.secao-meta .mes-curto { display: none; }
+
+@media (max-width: 1280px) {
+    .secao-meta .mes-longo { display: none; }
+    .secao-meta .mes-curto { display: inline; }
+}
+
+.secao-meta th:first-child,
+.secao-meta td.rotulo-linha {
+    width: 120px;
+    padding-left: 12px;
+}
+
+.secao-meta th.col-total {
+    width: 96px;
+}
+
+.secao-meta td.rotulo-linha small {
+    font-weight: 400;
+    color: var(--texto-mutado);
+}
+
+.secao-meta .linha-definir-meta td {
+    background: var(--pagina);
+    vertical-align: middle;
+}
+
+.campo-meta-mes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.secao-meta .linha-definir-meta select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 2px;
+    font-size: 0.78rem;
+    text-align: center;
+    text-align-last: center;
+}
+
+.secao-meta .linha-definir-meta input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 4px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    text-align: center;
+    background: var(--superficie);
+    color: var(--texto);
+    -moz-appearance: textfield;
+}
+
+.secao-meta .linha-definir-meta input::-webkit-outer-spin-button,
+.secao-meta .linha-definir-meta input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.secao-meta td.campo-com-erro input {
+    border-color: var(--critico);
+    background: var(--critico-claro);
+}
+
+.acoes-meta {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dica-meta {
+    font-size: 0.84rem;
+    color: var(--texto-mutado);
+}
+
+.secao-anual .col-total {
+    border-left: 1px solid var(--borda);
+    font-weight: 700;
+}
+
+/* Exclusão de parcela: só esta ou esta e as próximas */
+
+.escopo-parcelas {
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.escopo-parcelas legend {
+    font-size: 0.88rem;
+    color: var(--texto-secundario);
+    padding: 0 4px;
+}
+
+.cartao-formulario input[type="radio"] {
+    width: auto;
+    margin-right: 6px;
+}
+
+.cartao-formulario ul#id_aplicar_em,
+.cartao-formulario #id_aplicar_em {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }

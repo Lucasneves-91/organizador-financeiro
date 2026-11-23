@@ -5,6 +5,7 @@ from django.db.models import Q
 
 from categoria.models import RegraCategorizacao
 from transacoes.models import Transacao
+from transacoes.services.parcela_service import ParcelaService, buscar_parcela_existente
 
 from .models import ImportacaoLote, LancamentoImportado
 from .parsers import detectar_leitor
@@ -14,7 +15,7 @@ class FormatoNaoReconhecido(Exception):
     pass
 
 
-def _calcular_hash(banco: str, lancamento) -> str:
+def calcular_hash(banco: str, lancamento) -> str:
     # Inclui o tipo pra não confundir uma despesa com o estorno dela: podem cair no
     # mesmo dia, mesma descrição e mesmo valor (em módulo), só o sinal muda.
     chave = '|'.join([
@@ -76,10 +77,7 @@ class ImportacaoService:
 
         lancamentos_brutos = leitor_cls().ler(conteudo)
 
-        # Mês de referência da fatura inteira = o mês escolhido no formulário de
-        # importação (por padrão, o mês que estava selecionado no dashboard), não a
-        # data de cada compra (uma compra de agosto pode ser cobrada numa fatura
-        # importada em outubro, e é em outubro que ela deve contar no dashboard).
+        # Mês de referência = o escolhido na importação, não a data de cada compra.
         lote = ImportacaoLote.objects.create(
             arquivo_nome=getattr(arquivo_upload, 'name', 'arquivo.csv'),
             banco=leitor_cls.banco,
@@ -89,8 +87,15 @@ class ImportacaoService:
 
         itens = []
         for lancamento in lancamentos_brutos:
-            hash_importacao = _calcular_hash(leitor_cls.banco, lancamento)
+            hash_importacao = calcular_hash(leitor_cls.banco, lancamento)
             duplicado = Transacao.objects.filter(hash_importacao=hash_importacao).exists()
+            if not duplicado and lancamento.parcela_atual and lancamento.parcela_total:
+                # Parcela já criada automaticamente a partir da fatura de um mês anterior.
+                duplicado = buscar_parcela_existente(
+                    leitor_cls.banco, lancamento.tipo, lancamento.descricao, lancamento.valor,
+                    lancamento.parcela_atual, lancamento.parcela_total,
+                    lote.mes_referencia, lote.ano_referencia,
+                ) is not None
             duplicado_valor, duplicado_valor_descricao = _checar_duplicidade_por_valor(
                 lancamento, lote.mes_referencia, lote.ano_referencia,
             )
@@ -132,6 +137,14 @@ class ImportacaoService:
         criados = 0
         ignorados = 0
         for item in lote.lancamentos.filter(selecionado=True, transacao__isnull=True):
+            ja_existe = Transacao.objects.filter(hash_importacao=item.hash_importacao).exists() or (
+                item.parcela_atual and buscar_parcela_existente(
+                    lote.banco, item.tipo, item.descricao, item.valor,
+                    item.parcela_atual, item.parcela_total, lote.mes_referencia, lote.ano_referencia,
+                )
+            )
+            if ja_existe:
+                continue  # já existe (por exemplo, parcela gerada antes): não duplica
             transacao = Transacao.objects.create(
                 descricao=item.descricao,
                 valor=item.valor,
@@ -149,6 +162,7 @@ class ImportacaoService:
             item.transacao = transacao
             item.save(update_fields=['transacao'])
             criados += 1
+            ParcelaService.gerar_futuras(transacao)
 
         ignorados = lote.lancamentos.filter(selecionado=False).count()
         lote.status = ImportacaoLote.Status.CONFIRMADO
@@ -165,6 +179,9 @@ class ImportacaoService:
         """Apaga a fatura confirmada inteira: todas as Transacao criadas por ela e o
         próprio lote (os LancamentoImportado somem junto, via cascade)."""
         transacoes = Transacao.objects.filter(origem_importacao__lote=lote)
+        for transacao in transacoes:
+            # Parcelas futuras geradas a partir desta fatura saem junto.
+            transacao.proximas_parcelas().filter(parcela_gerada=True).delete()
         quantidade = transacoes.count()
         transacoes.delete()
         lote.delete()

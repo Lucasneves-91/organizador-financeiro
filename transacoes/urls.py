@@ -7,6 +7,7 @@ app_name = 'transacoes'
 urlpatterns = [
     path('', views.lista, name='lista'),
     path('anual/', views.anual, name='anual'),
+    path('meta/', views.meta, name='meta'),
     path('relatorio/', views.relatorio_mensal_pdf, name='relatorio_mensal_pdf'),
     path('relatorio/anual/', views.relatorio_anual_pdf, name='relatorio_anual_pdf'),
     path('nova/', views.cadastrar, name='cadastrar'),
